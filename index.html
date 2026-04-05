@@ -51,7 +51,6 @@ body { font-family: 'Cairo', sans-serif; background: #1a1a2e; direction: rtl; he
 .company-brand h1 { color: white; font-size: 1.3rem; }
 .company-brand h1 span { color: #f39c12; font-size: 0.7rem; display: block; }
 .user-area { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
-.user-badge { color: white; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; }
 .logout-btn, .admin-settings { padding: 8px 16px; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; }
 .logout-btn { background: #c0392b; color: white; }
 .admin-settings { background: #f39c12; color: #1a1a2e; }
@@ -74,7 +73,7 @@ th { background: #0a3d7c; color: white; }
 .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; }
 .price-buy { background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 8px; font-size: 11px; margin-right: 8px; }
 .hidden-price { display: none; }
-.f2-notice { position: fixed; bottom: 20px; left: 20px; background: #1a1a2e; color: #f39c12; padding: 8px 15px; border-radius: 20px; font-size: 12px; z-index: 100; }
+.f2-notice { position: fixed; bottom: 20px; left: 20px; background: #1a1a2e; color: #f39c12; padding: 8px 15px; border-radius: 20px; font-size: 12px; }
 .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
 .modal-card { background: white; padding: 30px; border-radius: 20px; width: 500px; max-width: 90%; max-height: 80vh; overflow-y: auto; }
 .invoice-print { font-family: 'Cairo', sans-serif; direction: rtl; padding: 20px; }
@@ -125,12 +124,14 @@ th { background: #0a3d7c; color: white; }
       <button class="tab-btn" onclick="showPanel('addProduct')">➕ إضافة منتج</button>
     </div>
 
+    <!-- المنتجات -->
     <div id="productsPanel" class="panel active">
       <h3>📋 قائمة المنتجات</h3>
       <input type="text" id="searchProduct" placeholder="🔍 بحث..." style="width:300px; padding:8px; margin:15px 0; border:1px solid #ddd; border-radius:8px;">
       <table><thead><tr><th>#</th><th>المنتج</th><th>سعر البيع</th><th id="buyPriceHeader" style="display:none;">سعر الشراء</th><th>المكسب</th><th>المخزون</th><th></th></tr></thead><tbody id="productsList"></tbody></table>
     </div>
 
+    <!-- نقطة البيع -->
     <div id="posPanel" class="panel">
       <h3>🛒 فاتورة جديدة</h3>
       <div class="form-group"><label>👤 اسم العميل:</label><input type="text" id="customerName" style="width:300px;"></div>
@@ -145,6 +146,7 @@ th { background: #0a3d7c; color: white; }
       <div class="f2-notice">💡 اضغط F2 على أي منتج لرؤية سعر الشراء</div>
     </div>
 
+    <!-- المرتجعات -->
     <div id="returnsPanel" class="panel">
       <h3>🔄 إدارة المرتجعات</h3>
       <div class="form-group"><label>🔍 اختر الفاتورة المراد إرجاعها:</label>
@@ -155,19 +157,26 @@ th { background: #0a3d7c; color: white; }
       <button onclick="processReturn()" class="btn btn-warning" style="margin-top:15px;">🔄 تأكيد الإرجاع</button>
     </div>
 
+    <!-- الفواتير -->
     <div id="invoicesPanel" class="panel">
       <h3>📄 الفواتير السابقة</h3>
       <div id="invoicesList"></div>
     </div>
 
+    <!-- الإيرادات -->
     <div id="revenuePanel" class="panel">
       <h3>💰 تقرير الإيرادات</h3>
-      <div class="revenue-card"><h3>إجمالي إيرادات اليوم: <span id="todayRevenue">0</span> جنيه</h3></div>
-      <div class="revenue-card" style="background: linear-gradient(135deg, #3498db, #2980b9);"><h3>إجمالي الإيرادات الكلي: <span id="totalRevenue">0</span> جنيه</h3></div>
+      <div class="revenue-card">
+        <h3>إجمالي إيرادات اليوم: <span id="todayRevenue">0</span> جنيه</h3>
+      </div>
+      <div class="revenue-card" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+        <h3>إجمالي الإيرادات الكلي: <span id="totalRevenue">0</span> جنيه</h3>
+      </div>
       <h4 style="margin-top:20px;">📊 تفاصيل الإيرادات اليومية</h4>
       <div id="revenueDetails"></div>
     </div>
 
+    <!-- إضافة منتج -->
     <div id="addProductPanel" class="panel">
       <h3>➕ إضافة منتج جديد</h3>
       <div class="form-group"><label>اسم المنتج:</label><input type="text" id="prodName"></div>
@@ -179,6 +188,7 @@ th { background: #0a3d7c; color: white; }
   </div>
 </div>
 
+<!-- مودال الطباعة -->
 <div id="printModal" class="modal-overlay">
   <div class="modal-card">
     <h3>🖨️ معاينة الفاتورة</h3>
@@ -188,6 +198,17 @@ th { background: #0a3d7c; color: white; }
   </div>
 </div>
 
+<!-- مودال تعديل السعر -->
+<div id="priceModal" class="modal-overlay">
+  <div class="modal-card">
+    <h3>✏️ تعديل سعر المنتج</h3>
+    <div class="form-group"><label>السعر الجديد:</label><input type="number" id="newPriceInput" step="0.01"></div>
+    <button onclick="confirmPriceChange()" class="btn btn-primary">تأكيد</button>
+    <button onclick="closePriceModal()" class="btn btn-danger">إلغاء</button>
+  </div>
+</div>
+
+<!-- مودال إعدادات الأدمن -->
 <div id="adminModal" class="modal-overlay">
   <div class="modal-card">
     <h3>⚙️ إعدادات النظام</h3>
@@ -199,12 +220,7 @@ th { background: #0a3d7c; color: white; }
 </div>
 
 <script>
-// ============= الباسوردات =============
-let userPassword = "1234";
-let adminPassword = "admin123";
-let currentUserType = null;
-
-// ============= البيانات =============
+let userPassword = "1234", adminPassword = "admin123", currentUserType = null;
 let products = JSON.parse(localStorage.getItem('axon_products')) || [
   { id: 1, name: "سبندل 2.2 كيلو", sellPrice: 4500, buyPrice: 3200, stock: 10 },
   { id: 2, name: "كنترولر Mach3", sellPrice: 1250, buyPrice: 800, stock: 15 },
@@ -213,12 +229,12 @@ let products = JSON.parse(localStorage.getItem('axon_products')) || [
 let invoices = JSON.parse(localStorage.getItem('axon_invoices')) || [];
 let returns = JSON.parse(localStorage.getItem('axon_returns')) || [];
 let currentInvoice = [];
+let tempProductId = null;
 
 function saveProducts() { localStorage.setItem('axon_products', JSON.stringify(products)); }
 function saveInvoices() { localStorage.setItem('axon_invoices', JSON.stringify(invoices)); }
 function saveReturns() { localStorage.setItem('axon_returns', JSON.stringify(returns)); }
 
-// ============= تسجيل الدخول =============
 function checkLogin() {
   let pass = document.getElementById('loginPassword').value;
   let errorDiv = document.getElementById('loginError');
@@ -262,25 +278,42 @@ function logout() {
   currentInvoice = []; 
 }
 
-// ============= عرض المنتجات =============
 function renderProducts() {
   let search = document.getElementById('searchProduct')?.value.toLowerCase() || '';
   let filtered = products.filter(p => p.name.toLowerCase().includes(search));
   let html = '';
   filtered.forEach((p, index) => {
     let profit = p.sellPrice - p.buyPrice;
-    html += `<tr id="product-row-${p.id}">
-      <td>${index+1}</td>
-      <td onmouseenter="showBuyPrice(${p.id})" onmouseleave="hideBuyPrice(${p.id})">${p.name} <span id="buy-tooltip-${p.id}" class="price-buy hidden-price">💰 شراء: ${p.buyPrice} ج</span></td>
-      <td>${p.sellPrice} ج</td>`;
+    html += `<tr id="product-row-${p.id}"><td>${index+1}</td><td onmouseenter="showBuyPrice(${p.id})" onmouseleave="hideBuyPrice(${p.id})">${p.name} <span id="buy-tooltip-${p.id}" class="price-buy hidden-price">💰 شراء: ${p.buyPrice} ج</span>`;
+    if (currentUserType === "admin") {
+      html += `<td contenteditable="true" onblur="updateProductPrice(${p.id}, this.innerText)">${p.sellPrice} ج</td>`;
+    } else {
+      html += `<td>${p.sellPrice} ج</td>`;
+    }
     if (currentUserType === "admin") html += `<td>${p.buyPrice} ج</td>`;
     html += `<td style="color:${profit>=0?'green':'red'}">${profit} ج</td>
       <td>${p.stock}</td>
       <td><button onclick="editProduct(${p.id})" class="btn btn-warning">✏️</button> 
       <button onclick="deleteProduct(${p.id})" class="btn btn-danger">🗑️</button></td>
-    </tr>`;
+     </tr>`;
   });
   document.getElementById('productsList').innerHTML = html;
+}
+
+function updateProductPrice(id, newPrice) {
+  let price = parseFloat(newPrice);
+  if(!isNaN(price) && price > 0) {
+    let product = products.find(p => p.id === id);
+    if(product) {
+      product.sellPrice = price;
+      saveProducts();
+      renderProducts();
+      renderProductSelect();
+      alert("✅ تم تحديث السعر");
+    }
+  } else {
+    renderProducts();
+  }
 }
 
 function showBuyPrice(id) { if(currentUserType === "admin") document.getElementById(`buy-tooltip-${id}`)?.classList.remove('hidden-price'); }
@@ -289,15 +322,11 @@ function hideBuyPrice(id) { document.getElementById(`buy-tooltip-${id}`)?.classL
 document.addEventListener('keydown', function(e) {
   if(e.key === 'F2' && currentUserType === "admin") {
     let selected = document.querySelector('#productsList tr:hover');
-    if(selected) { 
-      let id = selected.id.split('-')[2]; 
-      let product = products.find(p => p.id == id); 
-      if(product) alert(`💰 سعر شراء ${product.name}: ${product.buyPrice} جنيه\n💰 المكسب: ${product.sellPrice - product.buyPrice} جنيه`); 
-    } else alert("ضع الماوس على منتج ثم اضغط F2");
+    if(selected) { let id = selected.id.split('-')[2]; let product = products.find(p => p.id == id); if(product) alert(`💰 سعر شراء ${product.name}: ${product.buyPrice} جنيه\n💰 المكسب: ${product.sellPrice - product.buyPrice} جنيه`); }
+    else alert("ضع الماوس على منتج ثم اضغط F2");
   }
 });
 
-// ============= إدارة المنتجات =============
 function addNewProduct() {
   let name = document.getElementById('prodName').value, sellPrice = parseFloat(document.getElementById('prodSellPrice').value), buyPrice = parseFloat(document.getElementById('prodBuyPrice').value), stock = parseInt(document.getElementById('prodStock').value);
   if(!name || isNaN(sellPrice) || isNaN(buyPrice)) { alert("املأ جميع الحقول"); return; }
@@ -306,32 +335,10 @@ function addNewProduct() {
   document.getElementById('prodName').value = ''; document.getElementById('prodSellPrice').value = ''; document.getElementById('prodBuyPrice').value = '';
   alert("✅ تم إضافة المنتج");
 }
+function editProduct(id) { let p = products.find(p => p.id === id); let newName = prompt("اسم المنتج:", p.name); let newSell = parseFloat(prompt("سعر البيع:", p.sellPrice)); let newBuy = parseFloat(prompt("سعر الشراء:", p.buyPrice)); let newStock = parseInt(prompt("الكمية:", p.stock)); if(newName) p.name = newName; if(!isNaN(newSell)) p.sellPrice = newSell; if(!isNaN(newBuy) && currentUserType === "admin") p.buyPrice = newBuy; if(!isNaN(newStock)) p.stock = newStock; saveProducts(); renderProducts(); renderProductSelect(); }
+function deleteProduct(id) { if(confirm("حذف المنتج؟")) { products = products.filter(p => p.id !== id); saveProducts(); renderProducts(); renderProductSelect(); } }
 
-function editProduct(id) { 
-  let p = products.find(p => p.id === id); 
-  let newName = prompt("اسم المنتج:", p.name); 
-  let newSell = parseFloat(prompt("سعر البيع:", p.sellPrice)); 
-  let newBuy = parseFloat(prompt("سعر الشراء:", p.buyPrice)); 
-  let newStock = parseInt(prompt("الكمية:", p.stock)); 
-  if(newName) p.name = newName; 
-  if(!isNaN(newSell)) p.sellPrice = newSell; 
-  if(!isNaN(newBuy) && currentUserType === "admin") p.buyPrice = newBuy; 
-  if(!isNaN(newStock)) p.stock = newStock; 
-  saveProducts(); renderProducts(); renderProductSelect(); 
-}
-
-function deleteProduct(id) { 
-  if(confirm("حذف المنتج؟")) { 
-    products = products.filter(p => p.id !== id); 
-    saveProducts(); renderProducts(); renderProductSelect(); 
-  } 
-}
-
-// ============= البيع =============
-function renderProductSelect() { 
-  let select = document.getElementById('productSelect'); 
-  select.innerHTML = '<option value="">-- اختر منتج --</option>' + products.map(p => `<option value="${p.id}">${p.name} - ${p.sellPrice} ج (${p.stock})</option>`).join(''); 
-}
+function renderProductSelect() { let select = document.getElementById('productSelect'); select.innerHTML = '<option value="">-- اختر منتج --</option>' + products.map(p => `<option value="${p.id}">${p.name} - ${p.sellPrice} ج (${p.stock})</option>`).join(''); }
 
 function addToInvoice() { 
   let productId = document.getElementById('productSelect').value; 
@@ -357,18 +364,13 @@ function addToInvoice() {
   renderInvoice(); 
 }
 
-function renderInvoice() { 
-  let html = '', total = 0; 
-  currentInvoice.forEach((item, idx) => { 
-    total += item.total; 
-    html += `<tr>
+function renderInvoice() { let html = '', total = 0; currentInvoice.forEach((item, idx) => { total += item.total; html += `<tr>
       <td>${item.name}</td>
       <td><input type="number" value="${item.sellPrice}" onchange="updateItemPrice(${idx}, this.value)" style="width:80px;"> ج</td>
       <td><button onclick="changeQty(${idx}, -1)">-</button> ${item.quantity} <button onclick="changeQty(${idx}, 1)">+</button></td>
       <td>${item.total} ج</td>
       <td><button onclick="removeFromInvoice(${idx})" class="btn btn-danger">🗑️</button></td>
-    </tr>`; 
-  }); 
+     </tr>`; }); 
   document.getElementById('invoiceList').innerHTML = html; 
   document.getElementById('invoiceTotal').innerText = total; 
 }
@@ -382,27 +384,5 @@ function updateItemPrice(idx, newPrice) {
   }
 }
 
-function changeQty(idx, delta) { 
-  let item = currentInvoice[idx]; 
-  let product = products.find(p => p.id == item.productId); 
-  let newQty = item.quantity + delta; 
-  if(newQty < 1) { removeFromInvoice(idx); return; } 
-  if(newQty > product.stock) { alert("الكمية أكبر من المتوفر"); return; } 
-  item.quantity = newQty; 
-  item.total = item.quantity * item.sellPrice; 
-  renderInvoice(); 
-}
-function removeFromInvoice(idx) { currentInvoice.splice(idx, 1); renderInvoice(); }
-function clearInvoice() { currentInvoice = []; renderInvoice(); }
-
-function saveInvoice() {
-  let customerName = document.getElementById('customerName').value.trim();
-  if(!customerName) { alert("أدخل اسم العميل"); return; }
-  if(currentInvoice.length === 0) { alert("أضف منتجات"); return; }
-  for(let item of currentInvoice) { 
-    let product = products.find(p => p.id == item.productId); 
-    if(product.stock < item.quantity) { alert(`الكمية من ${product.name} غير متوفرة`); return; } 
-    product.stock -= item.quantity; 
-  }
-  let total = currentInvoice.reduce((s,i) => s + i.total, 0);
-  let today = new Date().toISOString().split('T')[0]
+function changeQty(idx, delta) { let item = currentInvoice[idx]; let product = products.find(p => p.id == item.productId); let newQty = item.quantity + delta; if(newQty < 1) { removeFromInvoice(idx); return; } if(newQty > product.stock) { alert("الكمية أكبر من المتوفر"); return; } item.quantity = newQty; item.total = item.quantity * item.sellPrice; renderInvoice(); }
+function removeFrom
