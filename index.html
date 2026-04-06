@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -450,6 +451,132 @@ function deleteInvoice(id) {
     alert("✅ تم الحذف");
   }
 }
-
 function editInvoice(id) {
-  let inv = i
+  let inv = invoices.find(i=>i.id===id);
+  if(!inv) return;
+  let newCustomer = prompt("اسم العميل:", inv.customer);
+  if(newCustomer) inv.customer = newCustomer;
+  let newItems = [];
+  for(let i=0; i<inv.items.length; i++) {
+    let item = inv.items[i];
+    let newQty = parseInt(prompt(`الكمية الجديدة لـ ${item.name} (الكمية الحالية: ${item.quantity}):`, item.quantity));
+    if(!isNaN(newQty) && newQty>0) {
+      let product = products.find(p=>p.name===item.name);
+      if(product) {
+        let diff = newQty - item.quantity;
+        if(diff > 0 && product.stock < diff) { alert(`لا يوجد مخزون كافٍ لـ ${product.name}`); return; }
+        product.stock -= diff;
+      }
+      item.quantity = newQty;
+      item.total = item.quantity * item.sellPrice;
+      newItems.push(item);
+    } else { newItems.push(item); }
+  }
+  inv.items = newItems;
+  inv.total = inv.items.reduce((s,i)=>s+i.total,0);
+  saveProducts(); saveInvoices();
+  renderInvoicesPage();
+  alert("✅ تم تعديل الفاتورة");
+}
+
+// ============= المرتجعات =============
+function renderReturnsPage() {
+  let html = `<div class="section"><div class="section-title">🔄 إرجاع منتج</div>
+  <div class="form-row"><div class="form-group"><label>📄 اختر الفاتورة</label><select id="returnInvoiceSelect"></select></div></div>
+  <button class="btn btn-primary" onclick="loadReturnInvoice()">عرض الفاتورة</button>
+  <div id="returnItemsArea"></div>
+  <button class="btn btn-success" onclick="processReturn()" style="margin-top:10px;">تأكيد الإرجاع</button>
+  </div>
+  <div class="section"><div class="section-title">📋 سجل المرتجعات</div><div id="returnsHistory"></div></div>`;
+  document.getElementById('contentArea').innerHTML = html;
+  populateReturnSelect();
+  renderReturnsHistory();
+}
+
+function populateReturnSelect() {
+  let sel = document.getElementById('returnInvoiceSelect');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">-- اختر فاتورة --</option>' + invoices.map(inv=>`<option value="${inv.id}">فاتورة #${inv.id} - ${inv.customer} - ${inv.total} ج</option>`).join('');
+}
+
+function loadReturnInvoice() {
+  let id = document.getElementById('returnInvoiceSelect').value;
+  if(!id) { alert("اختر فاتورة"); return; }
+  let inv = invoices.find(i=>i.id==id);
+  if(!inv) return;
+  let html = `<div class="tbl-wrap"><table><thead><tr><th>المنتج</th><th>الكمية المشتراة</th><th>السعر</th><th>كمية المرتجع</th></tr></thead><tbody>`;
+  inv.items.forEach((item,idx)=>{
+    html += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.sellPrice} ج</td>
+    <td><input type="number" id="ret-qty-${idx}" min="0" max="${item.quantity}" value="0" style="width:80px;"></td></tr>`;
+  });
+  html += `</tbody></table><input type="hidden" id="returnInvId" value="${inv.id}"></div>`;
+  document.getElementById('returnItemsArea').innerHTML = html;
+}
+
+function processReturn() {
+  let invId = document.getElementById('returnInvId')?.value;
+  if(!invId) { alert("اختر فاتورة أولاً"); return; }
+  let invoice = invoices.find(i=>i.id==invId);
+  if(!invoice) return;
+  let returned = [];
+  let totalReturn = 0;
+  for(let i=0; i<invoice.items.length; i++) {
+    let qty = parseInt(document.getElementById(`ret-qty-${i}`)?.value||0);
+    if(qty>0) {
+      let product = products.find(p=>p.name===invoice.items[i].name);
+      if(product) { product.stock += qty; }
+      returned.push({name:invoice.items[i].name, quantity:qty, price:invoice.items[i].sellPrice, total:qty*invoice.items[i].sellPrice});
+      totalReturn += qty*invoice.items[i].sellPrice;
+    }
+  }
+  if(returned.length===0) { alert("لم تختر أي منتجات"); return; }
+  returns.unshift({id:Date.now(), invoiceId:invId, date:new Date().toLocaleString('ar-EG'), items:returned, total:totalReturn});
+  saveProducts(); saveReturns();
+  renderReturnsHistory();
+  alert(`✅ تم الإرجاع بقيمة ${totalReturn} ج`);
+  document.getElementById('returnItemsArea').innerHTML = '';
+  populateReturnSelect();
+}
+
+function renderReturnsHistory() {
+  let container = document.getElementById('returnsHistory');
+  if(!container) return;
+  if(returns.length===0) { container.innerHTML='<div class="empty-state">لا توجد مرتجعات</div>'; return; }
+  let html = '<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>المنتجات</th><th>الإجمالي</th></tr></thead><tbody>';
+  returns.forEach(r=>{
+    let itemsText = r.items.map(i=>`${i.name} x${i.quantity}`).join(', ');
+    html += `<tr><td>${r.date}</td><td>#${r.invoiceId}</td><td>${itemsText}</td><td>${r.total} ج</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+}
+
+// ============= الإيرادات =============
+function renderRevenuePage() {
+  let today = new Date().toISOString().split('T')[0];
+  let todayTotal = 0, monthTotal = 0, allTotal = 0;
+  let now = new Date();
+  let monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  invoices.forEach(inv=>{
+    let invDate = inv.date.split(' ')[0];
+    allTotal += inv.total;
+    if(invDate === today) todayTotal += inv.total;
+    if(new Date(invDate) >= monthStart) monthTotal += inv.total;
+  });
+  let returnsTotal = returns.reduce((s,r)=>s+r.total,0);
+  let netRevenue = allTotal - returnsTotal;
+  let html = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-lbl">اليوم</div><div class="stat-val">${todayTotal.toFixed(2)} ج</div></div>
+      <div class="stat-card"><div class="stat-lbl">هذا الشهر</div><div class="stat-val">${monthTotal.toFixed(2)} ج</div></div>
+      <div class="stat-card"><div class="stat-lbl">الإجمالي الكلي</div><div class="stat-val">${allTotal.toFixed(2)} ج</div></div>
+      <div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${returnsTotal.toFixed(2)} ج</div></div>
+      <div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${netRevenue.toFixed(2)} ج</div></div>
+    </div>
+    <div class="section"><div class="section-title">📊 جميع الفواتير</div>${renderInvoicesTable(invoices)}</div>
+  `;
+  document.getElementById('contentArea').innerHTML = html;
+}
+</script>
+</body>
+</html>
