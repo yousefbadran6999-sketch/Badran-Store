@@ -32,37 +32,37 @@ body {
   min-height:100vh;
   position: relative;
 }
+/* علامة مائية خلفية خفيفة جداً في الواجهة */
 body::before {
   content: "";
   position: fixed;
-  bottom: 30px;
-  left: 30px;
-  width: 200px;
-  height: 200px;
+  bottom: 20px;
+  left: 20px;
+  width: 180px;
+  height: 180px;
   background-image: url('logo-badran.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: bottom left;
-  opacity: 0.08;
+  opacity: 0.06;
   pointer-events: none;
   z-index: 0;
 }
 body::after {
   content: "Badran CNC";
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  font-size: 40px;
+  bottom: 15px;
+  right: 15px;
+  font-size: 32px;
   font-weight: 900;
   color: rgba(0,0,0,0.03);
   pointer-events: none;
   z-index: 0;
   font-family: monospace;
-  white-space: nowrap;
 }
 @media (max-width: 768px) {
-  body::after { font-size: 24px; }
-  body::before { width: 120px; height: 120px; }
+  body::after { font-size: 20px; }
+  body::before { width: 100px; height: 100px; }
 }
 /* شاشة تسجيل الدخول */
 #loginScreen {
@@ -138,8 +138,16 @@ td { padding:14px; border-bottom:1px solid var(--border); }
 .inv-item-row { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:12px; margin-bottom:12px; align-items:center; background:#f8fafc; padding:12px; border-radius:16px; }
 .inv-total-box { background:#f8fafc; border-radius:20px; padding:16px 24px; display:flex; justify-content:flex-end; gap:30px; align-items:center; margin-top:20px; }
 .inv-total-box .val { font-size:1.5rem; font-weight:900; color:var(--accent); }
-.print-invoice { padding: 16px; background: white; direction: rtl; font-family: 'Cairo', sans-serif; }
-.print-invoice h2 { color: #f59e0b; margin-bottom: 8px; }
+.print-invoice { padding: 16px; background: white; direction: rtl; font-family: 'Cairo', sans-serif; position: relative; }
+.watermark-pdf {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  opacity: 0.1;
+  font-size: 12px;
+  color: #999;
+  z-index: 0;
+}
 </style>
 </head>
 <body>
@@ -174,6 +182,7 @@ td { padding:14px; border-bottom:1px solid var(--border); }
 // ===================== البيانات والتزامن =====================
 let currentUser = null;
 let products = [], invoices = [], returns = [];
+let adminPassword = 'admin123'; // الباسورد الافتراضي للأدمن
 const LOW_STOCK_THRESHOLD = 20;
 
 function loadData() {
@@ -184,6 +193,7 @@ function loadData() {
       products = data.products || [];
       invoices = data.invoices || [];
       returns = data.returns || [];
+      if(data.adminPassword) adminPassword = data.adminPassword;
     } catch(e) {}
   }
   if(!products.length) {
@@ -199,7 +209,7 @@ function loadData() {
   returns = returns.length ? returns : [];
 }
 function saveAllData() {
-  localStorage.setItem('axon_sync_data', JSON.stringify({ products, invoices, returns, lastUpdate: Date.now() }));
+  localStorage.setItem('axon_sync_data', JSON.stringify({ products, invoices, returns, adminPassword, lastUpdate: Date.now() }));
   localStorage.setItem('axon_broadcast', JSON.stringify({ type: 'sync', time: Date.now() }));
   setTimeout(() => localStorage.removeItem('axon_broadcast'), 100);
 }
@@ -218,6 +228,7 @@ window.addEventListener('storage', function(e) {
       products = data.products;
       invoices = data.invoices;
       returns = data.returns;
+      if(data.adminPassword) adminPassword = data.adminPassword;
       refreshCurrentView();
       let syncMsg = document.getElementById('syncStatus');
       if(syncMsg) { syncMsg.innerHTML = '✅ تم التحديث'; setTimeout(() => { if(syncMsg) syncMsg.innerHTML = '🔄 متزامن'; }, 2000); }
@@ -238,37 +249,41 @@ function refreshCurrentView() {
   }
 }
 
-// ===================== دوال PDF =====================
+// ===================== دوال PDF مع العلامة المائية =====================
 async function printInvoiceAsPDF(invoice) {
   const { jsPDF } = window.jspdf;
   const element = document.createElement('div');
   element.className = 'print-invoice';
   element.innerHTML = `
-    <div style="text-align:center; margin-bottom:20px;">
-      <h2>Badran CNC</h2>
-      <p>نظام إدارة المبيعات</p>
-      <p>${new Date().toLocaleString('ar-EG')}</p>
+    <div style="position:relative; min-height:100%;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <h2>Badran CNC</h2>
+        <p>نظام إدارة المبيعات</p>
+        <p>${new Date().toLocaleString('ar-EG')}</p>
+      </div>
+      <div><strong>رقم الفاتورة:</strong> ${invoice.id}</div>
+      <div><strong>العميل:</strong> ${invoice.customer}</div>
+      <div><strong>التاريخ:</strong> ${invoice.date}</div>
+      <table border="1" cellpadding="5" style="width:100%; border-collapse:collapse; margin:15px 0;">
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
+        <tbody>${invoice.items.map(i => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.sellPrice} ج</td><td>${i.total} ج</td>`).join('')}</tbody>
+       </table>
+      <div style="text-align:left; font-size:1.2rem;"><strong>الإجمالي النهائي: ${invoice.total} ج</strong></div>
+      <div style="margin-top:20px; text-align:center;">شكراً لتسوقكم مع Badran CNC</div>
+      <!-- علامة مائية في PDF -->
+      <div style="position: fixed; bottom: 10px; left: 10px; opacity: 0.08; font-size: 12px; color: #000;">
+        <img src="logo-badran.png" width="100" style="opacity:0.5"><br>Badran CNC
+      </div>
     </div>
-    <div><strong>رقم الفاتورة:</strong> ${invoice.id}</div>
-    <div><strong>العميل:</strong> ${invoice.customer}</div>
-    <div><strong>التاريخ:</strong> ${invoice.date}</div>
-    <table border="1" cellpadding="5" style="width:100%; border-collapse:collapse; margin:15px 0;">
-      <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
-      <tbody>${invoice.items.map(i => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.sellPrice} ج</td><td>${i.total} ج</td></tr>`).join('')}</tbody>
-    </table>
-    <div style="text-align:left; font-size:1.2rem;"><strong>الإجمالي النهائي: ${invoice.total} ج</strong></div>
-    <div style="margin-top:20px; text-align:center;">شكراً لتسوقكم مع Badran CNC</div>
   `;
   document.body.appendChild(element);
   try {
-    const canvas = await html2canvas(element, { scale: 2, logging: false });
+    const canvas = await html2canvas(element, { scale: 2, logging: false, backgroundColor: '#ffffff' });
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
     const imgWidth = 190;
-    const pageHeight = 297;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let position = 10;
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
     pdf.save(`فاتورة_${invoice.id}.pdf`);
   } catch(err) { alert('حدث خطأ أثناء إنشاء PDF'); }
   document.body.removeChild(element);
@@ -280,16 +295,21 @@ async function printShortagesPDF() {
   const element = document.createElement('div');
   element.className = 'print-invoice';
   element.innerHTML = `
-    <div style="text-align:center;">
-      <h2>Badran CNC</h2>
-      <h3>تقرير المنتجات الناقصة</h3>
-      <p>الحد الأدنى: ${LOW_STOCK_THRESHOLD} قطعة</p>
-      <p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
+    <div style="position:relative;">
+      <div style="text-align:center;">
+        <h2>Badran CNC</h2>
+        <h3>تقرير المنتجات الناقصة</h3>
+        <p>الحد الأدنى: ${LOW_STOCK_THRESHOLD} قطعة</p>
+        <p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
+      </div>
+      <table border="1" cellpadding="5" style="width:100%; margin-top:15px;">
+        <thead><tr><th>#</th><th>المنتج</th><th>الرصيد الحالي</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead>
+        <tbody>${low.map((p,i) => `<tr><td>${i+1}</td><td>${p.name}</td><td class="tag-red">${p.stock}</td><td>${p.buyPrice} ج</td><td>${p.sellPrice} ج</td>`).join('')}</tbody>
+       </table>
+      <div style="position: fixed; bottom: 10px; left: 10px; opacity: 0.08;">
+        <img src="logo-badran.png" width="100"><br>Badran CNC
+      </div>
     </div>
-    <table border="1" cellpadding="5" style="width:100%; margin-top:15px;">
-      <thead><tr><th>#</th><th>المنتج</th><th>الرصيد الحالي</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead>
-      <tbody>${low.map((p,i) => `<tr><td>${i+1}</td><td>${p.name}</td><td>${p.stock}</td><td>${p.buyPrice} ج</td><td>${p.sellPrice} ج</td></tr>`).join('')}</tbody>
-    </table>
   `;
   document.body.appendChild(element);
   try {
@@ -304,12 +324,25 @@ async function printShortagesPDF() {
   document.body.removeChild(element);
 }
 
+// ===================== تغيير باسورد الأدمن =====================
+function changeAdminPassword() {
+  let old = prompt('🔐 أدخل الباسورد الحالي للأدمن:');
+  if(old !== adminPassword) { alert('❌ الباسورد الحالي غير صحيح'); return; }
+  let newPass = prompt('✏️ أدخل الباسورد الجديد:');
+  if(!newPass || newPass.length < 4) { alert('❌ الباسورد يجب أن يكون 4 أحرف على الأقل'); return; }
+  let confirmPass = prompt('🔁 تأكيد الباسورد الجديد:');
+  if(newPass !== confirmPass) { alert('❌ الباسورد غير متطابق'); return; }
+  adminPassword = newPass;
+  saveAllData();
+  alert('✅ تم تغيير باسورد الأدمن بنجاح');
+}
+
 // ===================== تسجيل الدخول =====================
 function checkLogin() {
   let username = document.getElementById('loginUsername').value.trim();
   let password = document.getElementById('loginPass').value;
   if(!username) { showError('ادخل اسم المستخدم'); return; }
-  if((username.toLowerCase() === 'badran cnc' || username.toLowerCase() === 'badran') && password === 'admin123') {
+  if((username.toLowerCase() === 'badran cnc' || username.toLowerCase() === 'badran') && password === adminPassword) {
     currentUser = { role: 'admin', name: 'Badran CNC (أدمن)' };
     startApp();
   } else if(password === '1234' && username.trim() !== '') {
@@ -381,14 +414,15 @@ function renderDashboard() {
   let net = totalSales - totalReturns;
   let lowCount = getLowStockProducts().length;
   let lowCard = (currentUser.role === 'admin' && lowCount>0) ? `<div class="stat-card"><div class="stat-lbl">⚠️ نواقص</div><div class="stat-val" style="color:var(--warning)">${lowCount}</div><div class="stat-lbl">أقل من ${LOW_STOCK_THRESHOLD}</div></div>` : '';
-  let html = `<div class="stat-grid"><div class="stat-card"><div class="stat-lbl">المنتجات</div><div class="stat-val">${products.length}</div></div><div class="stat-card"><div class="stat-lbl">المخزون</div><div class="stat-val">${totalStock}</div></div><div class="stat-card"><div class="stat-lbl">المبيعات</div><div class="stat-val">${totalSales.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${totalReturns.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${net.toFixed(2)} ج</div></div>${lowCard}</div><div class="section"><div class="section-title">📋 آخر الفواتير</div>${renderInvoicesTable(invoices.slice(0,5))}</div>`;
+  let adminTools = (currentUser.role === 'admin') ? `<div class="stat-card" style="cursor:pointer;" onclick="changeAdminPassword()"><div class="stat-lbl">🔑 تغيير الباسورد</div><div class="stat-val">🔒</div><div class="stat-lbl">أدمن فقط</div></div>` : '';
+  let html = `<div class="stat-grid"><div class="stat-card"><div class="stat-lbl">المنتجات</div><div class="stat-val">${products.length}</div></div><div class="stat-card"><div class="stat-lbl">المخزون</div><div class="stat-val">${totalStock}</div></div><div class="stat-card"><div class="stat-lbl">المبيعات</div><div class="stat-val">${totalSales.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${totalReturns.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${net.toFixed(2)} ج</div></div>${lowCard}${adminTools}</div><div class="section"><div class="section-title">📋 آخر الفواتير</div>${renderInvoicesTable(invoices.slice(0,5))}</div>`;
   document.getElementById('contentArea').innerHTML = html;
 }
 function renderInvoicesTable(invList) {
   if(!invList.length) return '<div class="empty-state">لا توجد فواتير</div>';
-  let h='<div class="tbl-wrap"></table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th></tr></thead><tbody>';
+  let h='<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th></tr></thead><tbody>';
   invList.forEach((inv,i)=>{ h+=`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td></tr>`; });
-  return h+'</tbody></table></div>';
+  return h+'</tbody><table></div>';
 }
 function renderProductsPage() {
   let html = `<div class="section"><div class="section-title">📦 المنتجات</div><div class="form-row"><div class="form-group"><label>🔍 بحث</label><input type="text" id="searchProduct" placeholder="اسم المنتج..."></div></div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>المنتج</th><th>سعر البيع</th>${currentUser.role==='admin'?'<th>سعر الشراء</th>':''}<th>المخزون</th><th></th></tr></thead><tbody id="productsList"></tbody></table></div>${currentUser.role==='admin'?'<div class="btn-row"><button class="btn btn-primary" onclick="openAddProduct()">➕ إضافة منتج</button></div>':''}</div>`;
@@ -406,6 +440,18 @@ function renderProductsList() {
   });
   document.getElementById('productsList').innerHTML = html;
 }
+// F2 لعرض سعر الشراء (للأدمن فقط)
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'F2' && currentUser && currentUser.role === 'admin') {
+    let row = document.querySelector('#productsList tr:hover');
+    if(row && row.dataset.id) {
+      let product = products.find(p => p.id == row.dataset.id);
+      if(product) alert(`💰 سعر شراء ${product.name}: ${product.buyPrice} جنيه`);
+    } else {
+      alert("ضع الماوس على منتج ثم اضغط F2");
+    }
+  }
+});
 function openAddProduct() {
   let n=prompt("اسم المنتج"); if(!n) return;
   let s=parseFloat(prompt("سعر البيع")); let b=parseFloat(prompt("سعر الشراء")); let st=parseInt(prompt("الكمية"));
@@ -449,7 +495,7 @@ function changeQty(idx,delta) {
 }
 function removeItem(idx) { currentInvoiceItems.splice(idx,1); renderCurrentInvoice(); }
 function clearInvoice() { currentInvoiceItems=[]; renderCurrentInvoice(); }
-async function saveInvoice() {
+function saveInvoice() {
   let cust = document.getElementById('customerName').value.trim();
   if(!cust) return alert("ادخل اسم العميل");
   if(!currentInvoiceItems.length) return alert("أضف منتجات");
@@ -462,12 +508,12 @@ async function saveInvoice() {
   alert("✅ تم حفظ الفاتورة");
   renderInvoicesPage();
   if(currentUser.role==='admin') renderDashboard();
-  await printInvoiceAsPDF(invoice);
+  // لا تتم طباعة تلقائية - فقط حفظ
 }
 function renderInvoicesPage() {
   let html = `<div class="section"><div class="section-title">📄 الفواتير</div><div id="invoicesList"></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
-  let invHtml = invoices.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th>العمليات</th></tr></thead><tbody>${invoices.map((inv,i)=>`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️</button> <button class="btn-success btn-sm" onclick="printInvoiceAsPDF(invoices.find(i=>i.id===${inv.id}))">🖨️ PDF</button></td></tr>`).join('')}</tbody><table></div>` : '<div class="empty-state">لا توجد فواتير</div>';
+  let invHtml = invoices.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th>العمليات</th></tr></thead><tbody>${invoices.map((inv,i)=>`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️</button> <button class="btn-success btn-sm" onclick="printInvoiceAsPDF(invoices.find(i=>i.id===${inv.id}))">🖨️ PDF</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">لا توجد فواتير</div>';
   document.getElementById('invoicesList').innerHTML = invHtml;
 }
 function viewInvoice(id) { let inv=invoices.find(i=>i.id===id); if(inv) alert(`العميل: ${inv.customer}\nالتاريخ: ${inv.date}\n${inv.items.map(i=>`${i.name} - ${i.quantity} × ${i.sellPrice} = ${i.total}`).join('\n')}\nالإجمالي: ${inv.total} ج`); }
@@ -500,7 +546,7 @@ function renderReturnsHistory() {
   if(!returns.length){ c.innerHTML='<div class="empty-state">لا توجد مرتجعات</div>'; return; }
   let html='<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>الفاتورة</th><th>المنتجات</th><th>الإجمالي</th></tr></thead><tbody>';
   returns.forEach(r=>{ html+=`<tr><td>${r.date}</td><td>#${r.invoiceId}</td><td>${r.items.map(i=>`${i.name} x${i.quantity}`).join(', ')}</td><td>${r.total} ج</td></tr>`; });
-  html+='</tbody></table></div>'; c.innerHTML=html;
+  html+='</tbody><tr></div>'; c.innerHTML=html;
 }
 function renderRevenuePage() {
   let today=new Date().toISOString().split('T')[0]; let todayTotal=0,monthTotal=0,allTotal=0,now=new Date(),monthStart=new Date(now.getFullYear(),now.getMonth(),1);
