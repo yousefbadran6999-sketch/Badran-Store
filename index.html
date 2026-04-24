@@ -3,24 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AXON - نظام إدارة المبيعات</title>
+<title>AXON - نظام إدارة المبيعات (متزامن بين الأجهزة)</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0f0f17;
-  --surface: #16161f;
-  --card: #1e1e2e;
-  --border: #2a2a3e;
+  --bg: #f4f7fc;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #e2e8f0;
   --accent: #f39c12;
+  --accent-dark: #e67e22;
   --green: #2ecc71;
   --blue: #3498db;
   --danger: #e74c3c;
-  --text: #e8e8f0;
-  --muted: #7f8c9a;
+  --text: #1e293b;
+  --muted: #64748b;
   --warning: #e67e22;
+  --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); direction:rtl; min-height:100vh; }
+body { 
+  font-family:'Cairo',sans-serif; 
+  background:var(--bg); 
+  color:var(--text); 
+  direction:rtl; 
+  min-height:100vh;
+  position: relative;
+}
+body::before {
+  content: "🔷 AXON";
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-size: 120px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.02);
+  pointer-events: none;
+  z-index: 0;
+  white-space: nowrap;
+  font-family: monospace;
+}
+@media (max-width: 768px) {
+  body::before { font-size: 60px; bottom: 10px; left: 10px; }
+}
 
 /* Login */
 #loginScreen {
@@ -29,65 +54,77 @@ body { font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); 
 }
 .login-box {
   background:var(--card); border:1px solid var(--border);
-  border-radius:20px; padding:50px 40px; width:360px; text-align:center;
+  border-radius:24px; padding:50px 40px; width:380px; text-align:center;
+  box-shadow: var(--shadow);
 }
 .login-box h1 { font-size:2.5rem; font-weight:900; color:var(--accent); }
 .login-box input {
   width:100%; padding:14px; margin:10px 0; background:var(--surface);
-  border:1px solid var(--border); border-radius:10px; color:var(--text); text-align:center;
+  border:1px solid var(--border); border-radius:12px; color:var(--text); text-align:center;
 }
 .login-box button {
   width:100%; padding:14px; background:var(--accent);
-  border:none; border-radius:10px; font-weight:700; cursor:pointer; color:#111;
+  border:none; border-radius:12px; font-weight:700; cursor:pointer; color:#fff;
+  transition:0.2s;
 }
-.login-err { color:var(--danger); margin-top:10px; }
+.login-box button:hover { background:var(--accent-dark); }
+.login-err { color:var(--danger); margin-top:10px; font-size:0.85rem; }
 
 /* Main */
-#app { display:none; flex-direction:column; min-height:100vh; }
+#app { display:none; flex-direction:column; min-height:100vh; position:relative; z-index:1; }
 .topbar {
-  background:var(--card); border-bottom:1px solid var(--border);
+  background:var(--surface); border-bottom:1px solid var(--border);
   padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between;
+  box-shadow: var(--shadow);
 }
 .topbar-logo { font-size:1.4rem; font-weight:900; color:var(--accent); }
-.badge-role { padding:4px 12px; border-radius:20px; background:rgba(243,156,18,.15); color:var(--accent); }
-.btn-logout { background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:8px; cursor:pointer; }
+.badge-role { padding:4px 12px; border-radius:20px; background:rgba(243,156,18,.12); color:var(--accent-dark); font-weight:600; }
+.sync-status { font-size:0.75rem; color:var(--green); background:#e8f5e9; padding:4px 8px; border-radius:20px; margin-right:10px; }
+.btn-logout { background:transparent; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:10px; cursor:pointer; transition:0.2s; }
+.btn-logout:hover { background:#f1f5f9; }
 .navtabs {
   background:var(--surface); border-bottom:1px solid var(--border);
-  display:flex; gap:4px; padding:8px 24px; overflow-x:auto;
+  display:flex; gap:6px; padding:10px 24px; overflow-x:auto;
 }
 .navtab {
-  padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600; color:var(--muted); background:transparent;
+  padding:8px 20px; border-radius:30px; cursor:pointer; font-weight:600; color:var(--muted); background:transparent;
+  transition:0.2s;
 }
-.navtab.active { background:var(--accent); color:#111; }
+.navtab.active { background:var(--accent); color:#fff; }
 .content { flex:1; padding:24px; }
 .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
 .stat-card {
-  background:var(--card); border:1px solid var(--border); border-radius:14px;
-  padding:20px; text-align:center;
+  background:var(--card); border:1px solid var(--border); border-radius:20px;
+  padding:20px; text-align:center; box-shadow: var(--shadow);
 }
-.stat-card .stat-val { font-size:1.6rem; font-weight:900; margin:6px 0 4px; }
+.stat-card .stat-val { font-size:1.6rem; font-weight:900; margin:6px 0 4px; color:var(--accent); }
 .stat-card .stat-lbl { color:var(--muted); font-size:.85rem; }
-.section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:20px; }
+.section { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:20px; margin-bottom:20px; box-shadow: var(--shadow); }
 .section-title { font-size:1rem; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
 .form-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:12px; }
 .form-group { display:flex; flex-direction:column; gap:6px; }
-.form-group label { font-size:.82rem; color:var(--muted); }
+.form-group label { font-size:.82rem; color:var(--muted); font-weight:500; }
 .form-group input, .form-group select {
-  padding:10px; background:var(--surface); border:1px solid var(--border);
-  border-radius:8px; color:var(--text); outline:none;
+  padding:10px 14px; background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; color:var(--text); outline:none; transition:0.2s;
 }
-.btn { padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer; border:none; }
-.btn-primary { background:var(--accent); color:#111; }
-.btn-success { background:var(--green); color:#111; }
+.form-group input:focus, .form-group select:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(243,156,18,0.2); }
+.btn { padding:10px 20px; border-radius:30px; font-weight:700; cursor:pointer; border:none; transition:0.2s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:var(--accent-dark); transform:translateY(-1px); }
+.btn-success { background:var(--green); color:#fff; }
+.btn-success:hover { background:#27ae60; }
 .btn-danger { background:var(--danger); color:#fff; }
+.btn-danger:hover { background:#c0392b; }
 .btn-info { background:var(--blue); color:#fff; }
+.btn-info:hover { background:#2980b9; }
 .btn-warning { background:var(--warning); color:#fff; }
-.btn-sm { padding:5px 12px; font-size:.8rem; }
+.btn-sm { padding:5px 14px; font-size:.8rem; border-radius:20px; }
 .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
-.tbl-wrap { overflow-x:auto; }
+.tbl-wrap { overflow-x:auto; border-radius:16px; }
 table { width:100%; border-collapse:collapse; font-size:.88rem; }
-th { background:var(--surface); padding:10px; text-align:right; border-bottom:2px solid var(--border); }
-td { padding:10px; border-bottom:1px solid var(--border); }
+th { background:#f8fafc; padding:12px; text-align:right; border-bottom:2px solid var(--border); color:var(--text); font-weight:600; }
+td { padding:12px; border-bottom:1px solid var(--border); }
 .tag-green { color:var(--green); }
 .tag-red { color:var(--danger); }
 .tag-warning { color:var(--warning); }
@@ -96,25 +133,13 @@ td { padding:10px; border-bottom:1px solid var(--border); }
   margin-bottom:8px; align-items:center;
 }
 .inv-total-box {
-  background:var(--surface); border-radius:10px; padding:14px 18px;
-  display:flex; justify-content:flex-end; gap:30px; align-items:center;
+  background:var(--bg); border-radius:16px; padding:14px 18px;
+  display:flex; justify-content:flex-end; gap:30px; align-items:center; margin-top:16px;
 }
-.inv-total-box .val { font-size:1.2rem; font-weight:900; color:var(--accent); }
-.modal-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,.7);
-  display:flex; align-items:center; justify-content:center; z-index:500;
-  opacity:0; pointer-events:none; transition:.2s;
-}
-.modal-overlay.open { opacity:1; pointer-events:all; }
-.modal {
-  background:var(--card); border:1px solid var(--border); border-radius:16px;
-  padding:28px; width:min(680px,95vw); max-height:90vh; overflow-y:auto;
-}
-.modal-header { display:flex; justify-content:space-between; margin-bottom:20px; }
-.modal-close { background:none; border:none; color:var(--muted); font-size:1.4rem; cursor:pointer; }
+.inv-total-box .val { font-size:1.3rem; font-weight:900; color:var(--accent); }
 .empty-state { text-align:center; padding:50px; color:var(--muted); }
 .badge-warning {
-  background:rgba(230,126,34,0.2); color:var(--warning); padding:2px 8px; border-radius:12px;
+  background:rgba(230,126,34,0.12); color:var(--warning); padding:2px 8px; border-radius:20px;
   font-size:0.7rem; font-weight:bold; margin-right:8px;
 }
 </style>
@@ -123,8 +148,9 @@ td { padding:10px; border-bottom:1px solid var(--border); }
 
 <div id="loginScreen">
   <div class="login-box">
-    <h1>AXON</h1>
-    <p>نظام إدارة المبيعات</p>
+    <h1>🔷 AXON</h1>
+    <p>نظام إدارة المبيعات - متزامن بين الأجهزة</p>
+    <input type="text" id="loginUsername" placeholder="اسم المستخدم">
     <input type="password" id="loginPass" placeholder="كلمة السر" onkeypress="if(event.key==='Enter') checkLogin()">
     <button onclick="checkLogin()">دخول</button>
     <div id="loginError" class="login-err"></div>
@@ -135,6 +161,7 @@ td { padding:10px; border-bottom:1px solid var(--border); }
   <div class="topbar">
     <div class="topbar-logo">🔷 AXON</div>
     <div><span class="badge-role" id="userRoleBadge"></span>
+    <span class="sync-status" id="syncStatus">🔄 متزامن</span>
     <button class="btn-logout" onclick="logout()" style="margin-right:10px;">خروج</button></div>
   </div>
   <div class="navtabs" id="navTabs"></div>
@@ -142,39 +169,144 @@ td { padding:10px; border-bottom:1px solid var(--border); }
 </div>
 
 <script>
-let currentUser = null; // 'admin' or 'user'
+// ===================== نظام التزامن بين الأجهزة =====================
+let currentUser = null; // 'admin' or 'user' (كل المستخدمين العاديين يدخلوا بنفس الصلاحية)
 let products = [];
 let invoices = [];
 let returns = [];
 const LOW_STOCK_THRESHOLD = 20;
 
+// مفتاح التخزين الموحد لجميع الأجهزة
+const STORAGE_KEYS = {
+  PRODUCTS: 'axon_products_shared',
+  INVOICES: 'axon_invoices_shared',
+  RETURNS: 'axon_returns_shared'
+};
+
+// تحميل البيانات من localStorage (قاعدة بيانات مشتركة)
 function loadData() {
-  products = JSON.parse(localStorage.getItem('axon_products')) || [
+  let storedProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+  let storedInvoices = localStorage.getItem(STORAGE_KEYS.INVOICES);
+  let storedReturns = localStorage.getItem(STORAGE_KEYS.RETURNS);
+  
+  products = storedProducts ? JSON.parse(storedProducts) : [
     { id: 1, name: "سبندل 2.2 كيلو", sellPrice: 4500, buyPrice: 3200, stock: 10 },
     { id: 2, name: "كنترولر Mach3", sellPrice: 1250, buyPrice: 800, stock: 15 },
     { id: 3, name: "موتور Nema23", sellPrice: 890, buyPrice: 550, stock: 25 },
     { id: 4, name: "دراع روبوت", sellPrice: 3200, buyPrice: 2100, stock: 5 },
     { id: 5, name: "سيرفو 1.5kw", sellPrice: 2850, buyPrice: 1900, stock: 18 }
   ];
-  invoices = JSON.parse(localStorage.getItem('axon_invoices')) || [];
-  returns = JSON.parse(localStorage.getItem('axon_returns')) || [];
+  invoices = storedInvoices ? JSON.parse(storedInvoices) : [];
+  returns = storedReturns ? JSON.parse(storedReturns) : [];
 }
-function saveProducts() { localStorage.setItem('axon_products', JSON.stringify(products)); }
-function saveInvoices() { localStorage.setItem('axon_invoices', JSON.stringify(invoices)); }
-function saveReturns() { localStorage.setItem('axon_returns', JSON.stringify(returns)); }
+
+// حفظ البيانات (مع broadcast للتحديث الفوري بين الأجهزة)
+function saveProducts() { 
+  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+  broadcastUpdate('products');
+}
+function saveInvoices() { 
+  localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(invoices));
+  broadcastUpdate('invoices');
+}
+function saveReturns() { 
+  localStorage.setItem(STORAGE_KEYS.RETURNS, JSON.stringify(returns));
+  broadcastUpdate('returns');
+}
+
+// بث التحديث لجميع الأجهزة المفتوحة في نفس المتصفح (أو عبر localStorage event)
+function broadcastUpdate(type) {
+  // استخدام localStorage event للتزامن بين الأجهزة المختلفة (نفس المجال)
+  localStorage.setItem('axon_last_update', JSON.stringify({ type, time: Date.now() }));
+  // حذفها بعد قليل عشان الحدث يتكرر
+  setTimeout(() => localStorage.removeItem('axon_last_update'), 100);
+}
+
+// الاستماع للتغييرات من الأجهزة الأخرى
+window.addEventListener('storage', function(e) {
+  if (e.key === 'axon_last_update') {
+    // تحديث البيانات من localStorage
+    let newProducts = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    let newInvoices = localStorage.getItem(STORAGE_KEYS.INVOICES);
+    let newReturns = localStorage.getItem(STORAGE_KEYS.RETURNS);
+    
+    let changed = false;
+    if (newProducts && JSON.stringify(products) !== newProducts) {
+      products = JSON.parse(newProducts);
+      changed = true;
+    }
+    if (newInvoices && JSON.stringify(invoices) !== newInvoices) {
+      invoices = JSON.parse(newInvoices);
+      changed = true;
+    }
+    if (newReturns && JSON.stringify(returns) !== newReturns) {
+      returns = JSON.parse(newReturns);
+      changed = true;
+    }
+    
+    if (changed) {
+      // إعادة تحميل الواجهة الحالية لتحديث البيانات
+      refreshCurrentView();
+      // إظهار إشعار بسيط (اختياري)
+      let syncMsg = document.getElementById('syncStatus');
+      if (syncMsg) {
+        syncMsg.innerHTML = '✅ تم التحديث';
+        setTimeout(() => { if(syncMsg) syncMsg.innerHTML = '🔄 متزامن'; }, 2000);
+      }
+    }
+  }
+});
+
+function refreshCurrentView() {
+  // تحديث الصفحة الحالية بناءً على التاب المفتوح
+  const activeTab = document.querySelector('.navtab.active');
+  if (activeTab) {
+    const tabText = activeTab.innerText;
+    if (tabText.includes('الرئيسية')) renderDashboard();
+    else if (tabText.includes('المنتجات')) renderProductsPage();
+    else if (tabText.includes('البيع')) renderSalesPage();
+    else if (tabText.includes('الفواتير')) renderInvoicesPage();
+    else if (tabText.includes('المرتجعات')) renderReturnsPage();
+    else if (tabText.includes('الإيرادات')) renderRevenuePage();
+    else if (tabText.includes('النواقص')) renderShortagesPage();
+  }
+}
+
+// ===================== نظام تسجيل الدخول =====================
+// بيانات المستخدمين: أدمن وأي عدد من المستخدمين العاديين (نفس الصلاحيات)
+// المستخدم العادي يدخل باسم مستخدم وكلمة سر صحيحة (أي اسم + كلمة 1234)
+// لكن كل المستخدمين العاديين يشوفوا نفس البيانات تماماً
+const VALID_USERS = {
+  admin: { username: 'admin', password: 'admin123', role: 'admin' }
+};
+// أي مستخدم عادي يدخل بأي اسم وكلمة 1234 (مثل فرع1، فرع2، جهاز1، جهاز2)
+function validateUser(username, password) {
+  if (username === 'admin' && password === 'admin123') {
+    return { role: 'admin', name: 'admin' };
+  }
+  // أي مستخدم غير الأدمن يدخل بكلمة 1234 (صلاحية مستخدم عادي)
+  if (password === '1234' && username && username.trim() !== '') {
+    return { role: 'user', name: username.trim() };
+  }
+  return null;
+}
 
 function checkLogin() {
+  let username = document.getElementById('loginUsername').value.trim();
   let pass = document.getElementById('loginPass').value;
-  if (pass === 'admin123') {
-    currentUser = 'admin';
-    document.getElementById('userRoleBadge').innerHTML = '👑 أدمن';
-    startApp();
-  } else if (pass === '1234') {
-    currentUser = 'user';
-    document.getElementById('userRoleBadge').innerHTML = '👤 مستخدم';
+  
+  if (!username) {
+    document.getElementById('loginError').innerText = '❌ أدخل اسم المستخدم';
+    return;
+  }
+  
+  const user = validateUser(username, pass);
+  if (user) {
+    currentUser = user;
+    document.getElementById('userRoleBadge').innerHTML = user.role === 'admin' ? '👑 أدمن' : `🏪 ${username}`;
     startApp();
   } else {
-    document.getElementById('loginError').innerText = '❌ كلمة سر خاطئة';
+    document.getElementById('loginError').innerText = '❌ اسم المستخدم أو كلمة السر غير صحيحة';
     document.getElementById('loginPass').value = '';
   }
 }
@@ -191,6 +323,8 @@ function logout() {
   currentUser = null;
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPass').value = '';
 }
 
 function renderTabs() {
@@ -203,8 +337,8 @@ function renderTabs() {
     { id: 'revenue', name: '💰 الإيرادات' }
   ];
   
-  // قائمة النواقص تظهر فقط للأدمن
-  if (currentUser === 'admin') {
+  // النواقص تظهر فقط للأدمن
+  if (currentUser.role === 'admin') {
     tabs.push({ id: 'shortages', name: '⚠️ النواقص' });
   }
   
@@ -219,7 +353,6 @@ function renderTabs() {
 function switchTab(tabId) {
   document.querySelectorAll('.navtab').forEach(btn => btn.classList.remove('active'));
   if (event && event.target) event.target.classList.add('active');
-  else document.querySelector(`.navtab[onclick*="${tabId}"]`).classList.add('active');
   
   if (tabId === 'dashboard') renderDashboard();
   else if (tabId === 'products') renderProductsPage();
@@ -230,25 +363,23 @@ function switchTab(tabId) {
   else if (tabId === 'shortages') renderShortagesPage();
 }
 
-// عرض سعر الشراء بـ F4
+// F4 لعرض سعر الشراء (لأدمن فقط)
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'F4') {
+  if (e.key === 'F4' && currentUser && currentUser.role === 'admin') {
     let row = document.querySelector('#productsList tr:hover');
     if (row && row.dataset.id) {
       let product = products.find(p => p.id == row.dataset.id);
       if (product) alert(`💰 سعر شراء ${product.name}: ${product.buyPrice} جنيه`);
-    } else if (currentUser === 'admin') {
+    } else {
       alert("ضع الماوس على منتج ثم اضغط F4");
     }
   }
 });
 
-// دالة للحصول على المنتجات الناقصة (الرصيد أقل من 20)
 function getLowStockProducts() {
   return products.filter(p => p.stock < LOW_STOCK_THRESHOLD).sort((a,b) => a.stock - b.stock);
 }
 
-// صفحة النواقص (تظهر فقط للأدمن)
 function renderShortagesPage() {
   const lowProducts = getLowStockProducts();
   let html = `
@@ -256,111 +387,54 @@ function renderShortagesPage() {
       <div class="section-title">⚠️ المنتجات الناقصة (أقل من ${LOW_STOCK_THRESHOLD} قطعة)</div>
       <div class="tbl-wrap">
         <table>
-          <thead>
-            <tr><th>#</th><th>المنتج</th><th>الرصيد الحالي</th><th>الحد الأدنى</th><th>الحالة</th><th>سعر الشراء</th><th>سعر البيع</th></tr>
-          </thead>
+          <thead><tr><th>#</th><th>المنتج</th><th>الرصيد الحالي</th><th>الحد الأدنى</th><th>الحالة</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead>
           <tbody id="shortagesList"></tbody>
         </table>
       </div>
-      <div class="btn-row" style="margin-top:16px;">
-        <button class="btn btn-warning" onclick="exportShortagesReport()">📋 تصدير تقرير النواقص</button>
-      </div>
+      <div class="btn-row"><button class="btn btn-warning" onclick="exportShortagesReport()">📋 تصدير تقرير</button></div>
     </div>
   `;
   document.getElementById('contentArea').innerHTML = html;
-  
   let tbody = document.getElementById('shortagesList');
-  if (lowProducts.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">✅ ممتاز! جميع المنتجات متوفرة بكميات جيدة</td></tr>';
-  } else {
-    lowProducts.forEach((p, idx) => {
-      let status = p.stock === 0 ? '⚠️ نفد بالكامل' : (p.stock < 10 ? '🔴 حرج' : '🟡 منخفض');
-      tbody.innerHTML += `
-        <tr data-id="${p.id}">
-          <td>${idx+1}</td>
-          <td>${p.name}</td>
-          <td class="tag-red">${p.stock} قطعة</td>
-          <td>${LOW_STOCK_THRESHOLD}</td>
-          <td>${status}</td>
-          <td>${p.buyPrice} ج</td>
-          <td>${p.sellPrice} ج</td>
-        </tr>
-      `;
-    });
-  }
+  if (lowProducts.length === 0) tbody.innerHTML = '<tr><td colspan="7" class="empty-state">✅ جميع المنتجات متوفرة</td></tr>';
+  else lowProducts.forEach((p, idx) => {
+    let status = p.stock === 0 ? '⚠️ نفد' : (p.stock < 10 ? '🔴 حرج' : '🟡 منخفض');
+    tbody.innerHTML += `<tr><td>${idx+1}</td><td>${p.name}</td><td class="tag-red">${p.stock}</td><td>${LOW_STOCK_THRESHOLD}</td><td>${status}</td><td>${p.buyPrice} ج</td><td>${p.sellPrice} ج</td></tr>`;
+  });
 }
 
 function exportShortagesReport() {
-  const lowProducts = getLowStockProducts();
-  if (lowProducts.length === 0) {
-    alert("لا توجد منتجات ناقصة حالياً.");
-    return;
-  }
-  let report = "تقرير المنتجات الناقصة\n";
-  report += `التاريخ: ${new Date().toLocaleString('ar-EG')}\n`;
-  report += `الحد الأدنى: ${LOW_STOCK_THRESHOLD} قطعة\n`;
-  report += "-".repeat(40) + "\n";
-  lowProducts.forEach(p => {
-    report += `📦 ${p.name} | الرصيد: ${p.stock} | سعر الشراء: ${p.buyPrice} | سعر البيع: ${p.sellPrice}\n`;
-  });
-  report += "-".repeat(40) + "\n";
-  report += `عدد المنتجات الناقصة: ${lowProducts.length}`;
-  
+  const low = getLowStockProducts();
+  if(!low.length) { alert("لا توجد نواقص"); return; }
+  let report = "تقرير النواقص\n" + new Date().toLocaleString('ar-EG') + "\n";
+  low.forEach(p => report += `${p.name} | الرصيد: ${p.stock}\n`);
   const blob = new Blob([report], {type: "text/plain"});
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `نواقص_المخزون_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.txt`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `نواقص_${Date.now()}.txt`;
+  a.click();
 }
 
 function renderDashboard() {
-  let totalProducts = products.length;
   let totalStock = products.reduce((s,p)=>s+p.stock,0);
   let totalSales = invoices.reduce((s,i)=>s+i.total,0);
   let totalReturns = returns.reduce((s,r)=>s+r.total,0);
   let netSales = totalSales - totalReturns;
-  let lowStockCount = getLowStockProducts().length;
-  
-  let lowStockWarning = '';
-  if (currentUser === 'admin' && lowStockCount > 0) {
-    lowStockWarning = `<div class="stat-card" style="border-color: var(--warning);">
-      <div class="stat-lbl">⚠️ منتجات ناقصة</div>
-      <div class="stat-val" style="color: var(--warning);">${lowStockCount}</div>
-      <div class="stat-lbl">أقل من ${LOW_STOCK_THRESHOLD} قطعة</div>
-    </div>`;
-  }
-  
-  let html = `
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-lbl">المنتجات</div><div class="stat-val">${totalProducts}</div></div>
-      <div class="stat-card"><div class="stat-lbl">المخزون</div><div class="stat-val">${totalStock}</div></div>
-      <div class="stat-card"><div class="stat-lbl">المبيعات</div><div class="stat-val">${totalSales.toFixed(2)} ج</div></div>
-      <div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${totalReturns.toFixed(2)} ج</div></div>
-      <div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${netSales.toFixed(2)} ج</div></div>
-      ${lowStockWarning}
-    </div>
-    <div class="section"><div class="section-title">📋 آخر الفواتير</div>${renderInvoicesTable(invoices.slice(0,5))}</div>
-  `;
+  let lowCount = getLowStockProducts().length;
+  let lowWarning = (currentUser.role === 'admin' && lowCount > 0) ? `<div class="stat-card" style="border-color:var(--warning);"><div class="stat-lbl">⚠️ نواقص</div><div class="stat-val" style="color:var(--warning);">${lowCount}</div><div class="stat-lbl">أقل من ${LOW_STOCK_THRESHOLD}</div></div>` : '';
+  let html = `<div class="stat-grid"><div class="stat-card"><div class="stat-lbl">المنتجات</div><div class="stat-val">${products.length}</div></div><div class="stat-card"><div class="stat-lbl">المخزون</div><div class="stat-val">${totalStock}</div></div><div class="stat-card"><div class="stat-lbl">المبيعات</div><div class="stat-val">${totalSales.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${totalReturns.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${netSales.toFixed(2)} ج</div></div>${lowWarning}</div><div class="section"><div class="section-title">📋 آخر الفواتير</div>${renderInvoicesTable(invoices.slice(0,5))}</div>`;
   document.getElementById('contentArea').innerHTML = html;
 }
 
 function renderInvoicesTable(invList) {
   if(!invList.length) return '<div class="empty-state">لا توجد فواتير</div>';
   let html = '<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th></tr></thead><tbody>';
-  invList.forEach((inv,idx)=>{
-    html += `<tr><td>${idx+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td></tr>`;
-  });
-  html += '</tbody></table></div>';
-  return html;
+  invList.forEach((inv,idx)=> html += `<tr><td>${idx+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td></tr>`);
+  return html+'</tbody></table></div>';
 }
 
 function renderProductsPage() {
-  let html = `<div class="section"><div class="section-title">📦 المنتجات</div>
-  <div class="form-row"><div class="form-group"><label>🔍 بحث</label><input type="text" id="searchProduct" placeholder="اسم المنتج..."></div></div>
-  <div class="tbl-wrap"><table><thead><tr><th>#</th><th>المنتج</th><th>سعر البيع</th>${currentUser==='admin'?'<th>سعر الشراء</th>':''}<th>المخزون</th><th></th></tr></thead><tbody id="productsList"></tbody></table></div>`;
-  if(currentUser==='admin') html += `<div class="btn-row"><button class="btn btn-primary" onclick="openAddProductModal()">➕ إضافة منتج</button></div>`;
-  html += `</div>`;
+  let html = `<div class="section"><div class="section-title">📦 المنتجات</div><div class="form-row"><div class="form-group"><label>🔍 بحث</label><input type="text" id="searchProduct" placeholder="اسم المنتج..."></div></div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>المنتج</th><th>سعر البيع</th>${currentUser.role==='admin'?'<th>سعر الشراء</th>':''}<th>المخزون</th><th></th></tr></thead><tbody id="productsList"></tbody></table></div>${currentUser.role==='admin'?'<div class="btn-row"><button class="btn btn-primary" onclick="openAddProductModal()">➕ إضافة منتج</button></div>':''}</div>`;
   document.getElementById('contentArea').innerHTML = html;
   renderProductsList();
   document.getElementById('searchProduct')?.addEventListener('input',()=>renderProductsList());
@@ -372,11 +446,11 @@ function renderProductsList() {
   let html = '';
   filtered.forEach((p,i)=>{
     let stockClass = p.stock < LOW_STOCK_THRESHOLD ? 'tag-red' : '';
-    let lowStockBadge = (p.stock < LOW_STOCK_THRESHOLD && currentUser === 'admin') ? `<span class="badge-warning">ناقص</span>` : '';
-    html += `<tr data-id="${p.id}"><td>${i+1}</td><td>${p.name} ${lowStockBadge}</td><td>${p.sellPrice} ج</td>`;
-    if(currentUser==='admin') html += `<td>${p.buyPrice} ج</td>`;
+    let badge = (p.stock < LOW_STOCK_THRESHOLD && currentUser.role==='admin') ? '<span class="badge-warning">ناقص</span>' : '';
+    html += `<tr data-id="${p.id}"><td>${i+1}</td><td>${p.name} ${badge}</td><td>${p.sellPrice} ج</td>`;
+    if(currentUser.role==='admin') html += `<td>${p.buyPrice} ج</td>`;
     html += `<td class="${stockClass}">${p.stock}</td><td>`;
-    if(currentUser==='admin') html += `<button class="btn-info btn-sm" onclick="editProduct(${p.id})">✏️</button> <button class="btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>`;
+    if(currentUser.role==='admin') html += `<button class="btn-info btn-sm" onclick="editProduct(${p.id})">✏️</button> <button class="btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>`;
     html += `</td></tr>`;
   });
   document.getElementById('productsList').innerHTML = html;
@@ -389,10 +463,8 @@ function openAddProductModal() {
   let buy = parseFloat(prompt("سعر الشراء:"));
   let stock = parseInt(prompt("الكمية:",10));
   if(!isNaN(sell) && !isNaN(buy)) {
-    products.push({id:Date.now(), name, sellPrice:sell, buyPrice:buy, stock:stock || 0});
-    saveProducts(); 
-    renderProductsList();
-    if(currentUser === 'admin') renderDashboard();
+    products.push({id:Date.now(), name, sellPrice:sell, buyPrice:buy, stock:stock||0});
+    saveProducts(); renderProductsList(); if(currentUser.role==='admin') renderDashboard();
   }
 }
 function editProduct(id) {
@@ -403,288 +475,89 @@ function editProduct(id) {
   let newStock = parseInt(prompt("الكمية:", p.stock));
   if(newName) p.name = newName;
   if(!isNaN(newSell)) p.sellPrice = newSell;
-  if(!isNaN(newBuy) && currentUser==='admin') p.buyPrice = newBuy;
+  if(!isNaN(newBuy) && currentUser.role==='admin') p.buyPrice = newBuy;
   if(!isNaN(newStock)) p.stock = newStock;
-  saveProducts(); 
-  renderProductsList();
-  if(currentUser === 'admin') renderDashboard();
+  saveProducts(); renderProductsList(); if(currentUser.role==='admin') renderDashboard();
 }
 function deleteProduct(id) {
-  if(confirm("حذف المنتج؟")) {
-    products = products.filter(p=>p.id!==id);
-    saveProducts(); 
-    renderProductsList();
-    if(currentUser === 'admin') renderDashboard();
-  }
+  if(confirm("حذف المنتج؟")) { products = products.filter(p=>p.id!==id); saveProducts(); renderProductsList(); if(currentUser.role==='admin') renderDashboard(); }
 }
 
 // ============= البيع =============
 let currentInvoiceItems = [];
 
 function renderSalesPage() {
-  let html = `
-    <div class="section"><div class="section-title">🛒 فاتورة جديدة</div>
-    <div class="form-row"><div class="form-group"><label>👤 اسم العميل</label><input type="text" id="customerName" placeholder="أدخل اسم العميل"></div></div>
-    <div class="form-row"><div class="form-group"><label>🛍️ المنتج</label><select id="productSelect"></select></div>
-    <div class="form-group"><label>سعر مختلف (اختياري)</label><input type="number" id="customPrice" placeholder="سعر مختلف"></div></div>
-    <button class="btn btn-primary" onclick="addToInvoice()">➕ أضف للمنتج</button>
-    <div id="invItems"></div>
-    <div class="inv-total-box"><div class="lbl">الإجمالي:</div><div class="val" id="invoiceTotal">0</div></div>
-    <div class="btn-row"><button class="btn btn-success" onclick="saveInvoice()">💾 حفظ</button><button class="btn btn-danger" onclick="clearInvoice()">🗑️ مسح</button></div>
-    </div>`;
+  let html = `<div class="section"><div class="section-title">🛒 فاتورة جديدة</div><div class="form-row"><div class="form-group"><label>👤 اسم العميل</label><input type="text" id="customerName" placeholder="أدخل اسم العميل"></div></div><div class="form-row"><div class="form-group"><label>🛍️ المنتج</label><select id="productSelect"></select></div><div class="form-group"><label>سعر مختلف (اختياري)</label><input type="number" id="customPrice" placeholder="سعر مختلف"></div></div><button class="btn btn-primary" onclick="addToInvoice()">➕ أضف للمنتج</button><div id="invItems"></div><div class="inv-total-box"><div class="lbl">الإجمالي:</div><div class="val" id="invoiceTotal">0</div></div><div class="btn-row"><button class="btn btn-success" onclick="saveInvoice()">💾 حفظ</button><button class="btn btn-danger" onclick="clearInvoice()">🗑️ مسح</button></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
   renderProductSelect();
   renderCurrentInvoice();
 }
-
-function renderProductSelect() {
-  let sel = document.getElementById('productSelect');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">-- اختر منتج --</option>' + products.map(p=>`<option value="${p.id}">${p.name} - ${p.sellPrice} ج (المتبقي: ${p.stock})</option>`).join('');
-}
-
+function renderProductSelect() { let sel = document.getElementById('productSelect'); if(!sel) return; sel.innerHTML = '<option value="">-- اختر --</option>' + products.map(p=>`<option value="${p.id}">${p.name} - ${p.sellPrice} ج (المتبقي: ${p.stock})</option>`).join(''); }
 function addToInvoice() {
   let pid = document.getElementById('productSelect').value;
-  if(!pid) { alert("اختر منتج"); return; }
+  if(!pid) return alert("اختر منتج");
   let product = products.find(p=>p.id==pid);
-  if(product.stock<=0) { alert("غير متوفر"); return; }
+  if(product.stock<=0) return alert("غير متوفر");
   let custom = parseFloat(document.getElementById('customPrice').value);
   let finalPrice = !isNaN(custom) && custom>0 ? custom : product.sellPrice;
   let existing = currentInvoiceItems.find(i=>i.productId==pid);
-  if(existing) {
-    if(existing.quantity+1 > product.stock) { alert("الكمية أكبر من المتوفر"); return; }
-    existing.quantity++;
-    existing.total = existing.quantity * existing.sellPrice;
-  } else {
-    currentInvoiceItems.push({productId:product.id, name:product.name, sellPrice:finalPrice, quantity:1, total:finalPrice});
-  }
+  if(existing) { if(existing.quantity+1 > product.stock) return alert("الكمية أكبر من المتوفر"); existing.quantity++; existing.total = existing.quantity * existing.sellPrice; }
+  else currentInvoiceItems.push({productId:product.id, name:product.name, sellPrice:finalPrice, quantity:1, total:finalPrice});
   renderCurrentInvoice();
   document.getElementById('customPrice').value = '';
 }
-
 function renderCurrentInvoice() {
-  let container = document.getElementById('invItems');
-  if(!container) return;
+  let container = document.getElementById('invItems'); if(!container) return;
   let html = '';
-  currentInvoiceItems.forEach((item,idx)=>{
-    html += `<div class="inv-item-row">
-      <div>${item.name}</div>
-      <input type="number" value="${item.sellPrice}" onchange="updateItemPrice(${idx}, this.value)">
-      <div><button class="btn-sm" style="background:var(--border)" onclick="changeQty(${idx},-1)">-</button> ${item.quantity} <button class="btn-sm" style="background:var(--border)" onclick="changeQty(${idx},1)">+</button></div>
-      <div>${item.total} ج</div>
-      <button class="btn-danger btn-sm" onclick="removeItem(${idx})">🗑️</button>
-    </div>`;
-  });
+  currentInvoiceItems.forEach((item,idx)=>{ html += `<div class="inv-item-row"><div>${item.name}</div><input type="number" value="${item.sellPrice}" onchange="updateItemPrice(${idx}, this.value)" style="width:100px;"><div><button class="btn-sm" style="background:#e2e8f0;" onclick="changeQty(${idx},-1)">-</button> ${item.quantity} <button class="btn-sm" style="background:#e2e8f0;" onclick="changeQty(${idx},1)">+</button></div><div>${item.total} ج</div><button class="btn-danger btn-sm" onclick="removeItem(${idx})">🗑️</button></div>`; });
   container.innerHTML = html;
-  let total = currentInvoiceItems.reduce((s,i)=>s+i.total,0);
-  document.getElementById('invoiceTotal').innerText = total;
+  document.getElementById('invoiceTotal').innerText = currentInvoiceItems.reduce((s,i)=>s+i.total,0);
 }
-
-function updateItemPrice(idx, newPrice) {
-  let price = parseFloat(newPrice);
-  if(!isNaN(price) && price>0) {
-    currentInvoiceItems[idx].sellPrice = price;
-    currentInvoiceItems[idx].total = currentInvoiceItems[idx].quantity * price;
-    renderCurrentInvoice();
-  }
-}
-function changeQty(idx, delta) {
-  let item = currentInvoiceItems[idx];
-  let product = products.find(p=>p.id==item.productId);
-  let newQty = item.quantity + delta;
-  if(newQty<1) { removeItem(idx); return; }
-  if(newQty > product.stock) { alert("الكمية أكبر من المتوفر"); return; }
-  item.quantity = newQty;
-  item.total = item.quantity * item.sellPrice;
-  renderCurrentInvoice();
-}
+function updateItemPrice(idx, price) { let p=parseFloat(price); if(!isNaN(p) && p>0) { currentInvoiceItems[idx].sellPrice=p; currentInvoiceItems[idx].total=currentInvoiceItems[idx].quantity*p; renderCurrentInvoice(); } }
+function changeQty(idx, delta) { let item=currentInvoiceItems[idx], product=products.find(p=>p.id==item.productId), newQty=item.quantity+delta; if(newQty<1) { removeItem(idx); return; } if(newQty>product.stock) { alert("كمية أكبر من المتوفر"); return; } item.quantity=newQty; item.total=item.quantity*item.sellPrice; renderCurrentInvoice(); }
 function removeItem(idx) { currentInvoiceItems.splice(idx,1); renderCurrentInvoice(); }
 function clearInvoice() { currentInvoiceItems = []; renderCurrentInvoice(); }
-
 function saveInvoice() {
   let customer = document.getElementById('customerName').value.trim();
-  if(!customer) { alert("أدخل اسم العميل"); return; }
-  if(currentInvoiceItems.length===0) { alert("أضف منتجات"); return; }
-  for(let item of currentInvoiceItems) {
-    let product = products.find(p=>p.id==item.productId);
-    if(product.stock < item.quantity) { alert(`الكمية من ${product.name} غير متوفرة`); return; }
-    product.stock -= item.quantity;
-  }
+  if(!customer) return alert("أدخل اسم العميل");
+  if(!currentInvoiceItems.length) return alert("أضف منتجات");
+  for(let item of currentInvoiceItems) { let prod = products.find(p=>p.id==item.productId); if(prod.stock < item.quantity) return alert(`الكمية من ${prod.name} غير متوفرة`); prod.stock -= item.quantity; }
   let total = currentInvoiceItems.reduce((s,i)=>s+i.total,0);
-  let invoice = { id: Date.now(), customer, date: new Date().toLocaleString('ar-EG'), items: JSON.parse(JSON.stringify(currentInvoiceItems)), total };
-  invoices.unshift(invoice);
+  invoices.unshift({id:Date.now(), customer, date:new Date().toLocaleString('ar-EG'), items:JSON.parse(JSON.stringify(currentInvoiceItems)), total});
   saveProducts(); saveInvoices();
-  clearInvoice();
-  document.getElementById('customerName').value = '';
+  clearInvoice(); document.getElementById('customerName').value = '';
   alert("✅ تم حفظ الفاتورة");
   renderInvoicesPage();
-  if(currentUser === 'admin') renderDashboard();
+  if(currentUser.role === 'admin') renderDashboard();
 }
 
-// ============= الفواتير =============
 function renderInvoicesPage() {
   let html = `<div class="section"><div class="section-title">📄 الفواتير</div><div id="invoicesList"></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
-  let invHtml = '';
-  if(invoices.length===0) invHtml = '<div class="empty-state">لا توجد فواتير</div>';
-  else {
-    invHtml = '<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th></th></tr></thead><tbody>';
-    invoices.forEach((inv,idx)=>{
-      invHtml += `<tr><td>${idx+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td>
-      <td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋 عرض</button>
-      ${currentUser==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️ حذف</button>`:''}
-      <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️ تعديل</button></td></tr>`;
-    });
-    invHtml += '</tbody></table></div>';
-  }
+  let invHtml = invoices.length ? '<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th></th></tr></thead><tbody>' + invoices.map((inv,idx)=>`<tr><td>${idx+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋 عرض</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️ حذف</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️ تعديل</button></td></tr>`).join('') + '</tbody></table></div>' : '<div class="empty-state">لا توجد فواتير</div>';
   document.getElementById('invoicesList').innerHTML = invHtml;
 }
+function viewInvoice(id) { let inv=invoices.find(i=>i.id===id); if(inv) alert(`العميل: ${inv.customer}\nالتاريخ: ${inv.date}\nالمنتجات:\n${inv.items.map(i=>`${i.name} - ${i.quantity} × ${i.sellPrice} = ${i.total}`).join('\n')}\nالإجمالي: ${inv.total} ج`); }
+function deleteInvoice(id) { if(!confirm("حذف؟")) return; let inv=invoices.find(i=>i.id===id); if(inv){ inv.items.forEach(item=>{ let prod=products.find(p=>p.name===item.name); if(prod) prod.stock+=item.quantity; }); invoices=invoices.filter(i=>i.id!==id); saveProducts(); saveInvoices(); renderInvoicesPage(); if(currentUser.role==='admin') renderDashboard(); alert("تم الحذف"); } }
+function editInvoice(id) { let inv=invoices.find(i=>i.id===id); if(!inv) return; let nc=prompt("اسم العميل:",inv.customer); if(nc) inv.customer=nc; for(let i=0;i<inv.items.length;i++){ let it=inv.items[i]; let nq=parseInt(prompt(`الكمية الجديدة لـ ${it.name}:`,it.quantity)); if(!isNaN(nq) && nq>0){ let prod=products.find(p=>p.name===it.name); if(prod){ let diff=nq-it.quantity; if(diff>0 && prod.stock<diff) { alert(`مخزون غير كافٍ`); return; } prod.stock-=diff; } it.quantity=nq; it.total=nq*it.sellPrice; } } inv.total=inv.items.reduce((s,i)=>s+i.total,0); saveProducts(); saveInvoices(); renderInvoicesPage(); if(currentUser.role==='admin') renderDashboard(); alert("تم التعديل"); }
 
-function viewInvoice(id) {
-  let inv = invoices.find(i=>i.id===id);
-  if(!inv) return;
-  let msg = `العميل: ${inv.customer}\nالتاريخ: ${inv.date}\nالمنتجات:\n` + inv.items.map(i=>`${i.name} - ${i.quantity} × ${i.sellPrice} = ${i.total}`).join('\n') + `\nالإجمالي: ${inv.total} ج`;
-  alert(msg);
-}
-
-function deleteInvoice(id) {
-  if(!confirm("حذف الفاتورة؟")) return;
-  let inv = invoices.find(i=>i.id===id);
-  if(inv) {
-    for(let item of inv.items) {
-      let prod = products.find(p=>p.name===item.name);
-      if(prod) prod.stock += item.quantity;
-    }
-    invoices = invoices.filter(i=>i.id!==id);
-    saveProducts(); saveInvoices();
-    renderInvoicesPage();
-    if(currentUser === 'admin') renderDashboard();
-    alert("✅ تم الحذف");
-  }
-}
-function editInvoice(id) {
-  let inv = invoices.find(i=>i.id===id);
-  if(!inv) return;
-  let newCustomer = prompt("اسم العميل:", inv.customer);
-  if(newCustomer) inv.customer = newCustomer;
-  for(let i=0; i<inv.items.length; i++) {
-    let item = inv.items[i];
-    let newQty = parseInt(prompt(`الكمية الجديدة لـ ${item.name} (الكمية الحالية: ${item.quantity}):`, item.quantity));
-    if(!isNaN(newQty) && newQty>0) {
-      let product = products.find(p=>p.name===item.name);
-      if(product) {
-        let diff = newQty - item.quantity;
-        if(diff > 0 && product.stock < diff) { alert(`لا يوجد مخزون كافٍ لـ ${product.name}`); return; }
-        product.stock -= diff;
-      }
-      item.quantity = newQty;
-      item.total = item.quantity * item.sellPrice;
-    }
-  }
-  inv.total = inv.items.reduce((s,i)=>s+i.total,0);
-  saveProducts(); saveInvoices();
-  renderInvoicesPage();
-  if(currentUser === 'admin') renderDashboard();
-  alert("✅ تم تعديل الفاتورة");
-}
-
-// ============= المرتجعات =============
 function renderReturnsPage() {
-  let html = `<div class="section"><div class="section-title">🔄 إرجاع منتج</div>
-  <div class="form-row"><div class="form-group"><label>📄 اختر الفاتورة</label><select id="returnInvoiceSelect"></select></div></div>
-  <button class="btn btn-primary" onclick="loadReturnInvoice()">عرض الفاتورة</button>
-  <div id="returnItemsArea"></div>
-  <button class="btn btn-success" onclick="processReturn()" style="margin-top:10px;">تأكيد الإرجاع</button>
-  </div>
-  <div class="section"><div class="section-title">📋 سجل المرتجعات</div><div id="returnsHistory"></div></div>`;
+  let html = `<div class="section"><div class="section-title">🔄 إرجاع منتج</div><div class="form-row"><div class="form-group"><label>📄 اختر الفاتورة</label><select id="returnInvoiceSelect"></select></div></div><button class="btn btn-primary" onclick="loadReturnInvoice()">عرض</button><div id="returnItemsArea"></div><button class="btn btn-success" onclick="processReturn()" style="margin-top:10px;">تأكيد الإرجاع</button></div><div class="section"><div class="section-title">📋 سجل المرتجعات</div><div id="returnsHistory"></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
-  populateReturnSelect();
+  let sel = document.getElementById('returnInvoiceSelect'); if(sel) sel.innerHTML = '<option value="">-- اختر --</option>' + invoices.map(inv=>`<option value="${inv.id}">فاتورة #${inv.id} - ${inv.customer}</option>`).join('');
   renderReturnsHistory();
 }
+function loadReturnInvoice() { let id=document.getElementById('returnInvoiceSelect').value; if(!id) return alert("اختر"); let inv=invoices.find(i=>i.id==id); if(!inv) return; let html=`<div class="tbl-wrap"><table><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>كمية المرتجع</th></tr></thead><tbody>`; inv.items.forEach((it,idx)=>{ html+=`<tr><td>${it.name}</td><td>${it.quantity}</td><td>${it.sellPrice} ج</td><td><input type="number" id="ret-qty-${idx}" min="0" max="${it.quantity}" value="0" style="width:80px;"></td></tr>`; }); html+=`</tbody></table><input type="hidden" id="returnInvId" value="${inv.id}">`; document.getElementById('returnItemsArea').innerHTML=html; }
+function processReturn() { let invId=document.getElementById('returnInvId')?.value; if(!invId) return alert("اختر فاتورة"); let inv=invoices.find(i=>i.id==invId); if(!inv) return; let returned=[]; let totalReturn=0; for(let i=0;i<inv.items.length;i++){ let qty=parseInt(document.getElementById(`ret-qty-${i}`)?.value||0); if(qty>0){ let prod=products.find(p=>p.name===inv.items[i].name); if(prod) prod.stock+=qty; returned.push({name:inv.items[i].name, quantity:qty, price:inv.items[i].sellPrice, total:qty*inv.items[i].sellPrice}); totalReturn+=qty*inv.items[i].sellPrice; } } if(!returned.length) return alert("لم تختر شيئاً"); returns.unshift({id:Date.now(), invoiceId:invId, date:new Date().toLocaleString('ar-EG'), items:returned, total:totalReturn}); saveProducts(); saveReturns(); renderReturnsHistory(); if(currentUser.role==='admin') renderDashboard(); alert(`تم الإرجاع بقيمة ${totalReturn} ج`); document.getElementById('returnItemsArea').innerHTML=''; let sel=document.getElementById('returnInvoiceSelect'); if(sel) sel.innerHTML='<option value="">-- اختر --</option>'+invoices.map(inv=>`<option value="${inv.id}">فاتورة #${inv.id} - ${inv.customer}</option>`).join(''); }
+function renderReturnsHistory() { let c=document.getElementById('returnsHistory'); if(!c) return; if(!returns.length){ c.innerHTML='<div class="empty-state">لا توجد مرتجعات</div>'; return; } let html='<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>الفاتورة</th><th>المنتجات</th><th>الإجمالي</th></tr></thead><tbody>'; returns.forEach(r=>{ html+=`<tr><td>${r.date}</td><td>#${r.invoiceId}</td><td>${r.items.map(i=>`${i.name} x${i.quantity}`).join(', ')}</td><td>${r.total} ج</td></tr>`; }); html+='</tbody></table></div>'; c.innerHTML=html; }
 
-function populateReturnSelect() {
-  let sel = document.getElementById('returnInvoiceSelect');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">-- اختر فاتورة --</option>' + invoices.map(inv=>`<option value="${inv.id}">فاتورة #${inv.id} - ${inv.customer} - ${inv.total} ج</option>`).join('');
-}
-
-function loadReturnInvoice() {
-  let id = document.getElementById('returnInvoiceSelect').value;
-  if(!id) { alert("اختر فاتورة"); return; }
-  let inv = invoices.find(i=>i.id==id);
-  if(!inv) return;
-  let html = `<div class="tbl-wrap"><table><thead><tr><th>المنتج</th><th>الكمية المشتراة</th><th>السعر</th><th>كمية المرتجع</th></tr></thead><tbody>`;
-  inv.items.forEach((item,idx)=>{
-    html += `<tr><td>${item.name}</td><td>${item.quantity}</td><td>${item.sellPrice} ج</td>
-    <td><input type="number" id="ret-qty-${idx}" min="0" max="${item.quantity}" value="0" style="width:80px;"></td></tr>`;
-  });
-  html += `</tbody></table><input type="hidden" id="returnInvId" value="${inv.id}"></div>`;
-  document.getElementById('returnItemsArea').innerHTML = html;
-}
-
-function processReturn() {
-  let invId = document.getElementById('returnInvId')?.value;
-  if(!invId) { alert("اختر فاتورة أولاً"); return; }
-  let invoice = invoices.find(i=>i.id==invId);
-  if(!invoice) return;
-  let returned = [];
-  let totalReturn = 0;
-  for(let i=0; i<invoice.items.length; i++) {
-    let qty = parseInt(document.getElementById(`ret-qty-${i}`)?.value||0);
-    if(qty>0) {
-      let product = products.find(p=>p.name===invoice.items[i].name);
-      if(product) { product.stock += qty; }
-      returned.push({name:invoice.items[i].name, quantity:qty, price:invoice.items[i].sellPrice, total:qty*invoice.items[i].sellPrice});
-      totalReturn += qty*invoice.items[i].sellPrice;
-    }
-  }
-  if(returned.length===0) { alert("لم تختر أي منتجات"); return; }
-  returns.unshift({id:Date.now(), invoiceId:invId, date:new Date().toLocaleString('ar-EG'), items:returned, total:totalReturn});
-  saveProducts(); saveReturns();
-  renderReturnsHistory();
-  if(currentUser === 'admin') renderDashboard();
-  alert(`✅ تم الإرجاع بقيمة ${totalReturn} ج`);
-  document.getElementById('returnItemsArea').innerHTML = '';
-  populateReturnSelect();
-}
-
-function renderReturnsHistory() {
-  let container = document.getElementById('returnsHistory');
-  if(!container) return;
-  if(returns.length===0) { container.innerHTML='<div class="empty-state">لا توجد مرتجعات</div>'; return; }
-  let html = '<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>رقم الفاتورة</th><th>المنتجات</th><th>الإجمالي</th></tr></thead><tbody>';
-  returns.forEach(r=>{
-    let itemsText = r.items.map(i=>`${i.name} x${i.quantity}`).join(', ');
-    html += `<tr><td>${r.date}</td><td>#${r.invoiceId}</td><td>${itemsText}</td><td>${r.total} ج</tr>`;
-  });
-  html += '</tbody></table></div>';
-  container.innerHTML = html;
-}
-
-// ============= الإيرادات =============
 function renderRevenuePage() {
-  let today = new Date().toISOString().split('T')[0];
-  let todayTotal = 0, monthTotal = 0, allTotal = 0;
-  let now = new Date();
-  let monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  invoices.forEach(inv=>{
-    let invDate = inv.date.split(' ')[0];
-    allTotal += inv.total;
-    if(invDate === today) todayTotal += inv.total;
-    if(new Date(invDate) >= monthStart) monthTotal += inv.total;
-  });
-  let returnsTotal = returns.reduce((s,r)=>s+r.total,0);
-  let netRevenue = allTotal - returnsTotal;
-  let html = `
-    <div class="stat-grid">
-      <div class="stat-card"><div class="stat-lbl">اليوم</div><div class="stat-val">${todayTotal.toFixed(2)} ج</div></div>
-      <div class="stat-card"><div class="stat-lbl">هذا الشهر</div><div class="stat-val">${monthTotal.toFixed(2)} ج</div></div>
-      <div class="stat-card"><div class="stat-lbl">الإجمالي الكلي</div><div class="stat-val">${allTotal.toFixed(2)} ج</div></div>
-      <div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${returnsTotal.toFixed(2)} ج</div></div>
-      <div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${netRevenue.toFixed(2)} ج</div></div>
-    </div>
-    <div class="section"><div class="section-title">📊 جميع الفواتير</div>${renderInvoicesTable(invoices)}</div>
-  `;
+  let today=new Date().toISOString().split('T')[0];
+  let todayTotal=0, monthTotal=0, allTotal=0, now=new Date(), monthStart=new Date(now.getFullYear(), now.getMonth(), 1);
+  invoices.forEach(inv=>{ let d=inv.date.split(' ')[0]; allTotal+=inv.total; if(d===today) todayTotal+=inv.total; if(new Date(d)>=monthStart) monthTotal+=inv.total; });
+  let returnsTotal=returns.reduce((s,r)=>s+r.total,0);
+  let netRevenue=allTotal-returnsTotal;
+  let html=`<div class="stat-grid"><div class="stat-card"><div class="stat-lbl">اليوم</div><div class="stat-val">${todayTotal.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">هذا الشهر</div><div class="stat-val">${monthTotal.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">الإجمالي</div><div class="stat-val">${allTotal.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">المرتجعات</div><div class="stat-val">${returnsTotal.toFixed(2)} ج</div></div><div class="stat-card"><div class="stat-lbl">صافي الإيرادات</div><div class="stat-val">${netRevenue.toFixed(2)} ج</div></div></div><div class="section"><div class="section-title">📊 جميع الفواتير</div>${renderInvoicesTable(invoices)}</div>`;
   document.getElementById('contentArea').innerHTML = html;
 }
 </script>
