@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-/* جميع التنسيقات كما هي (لم تتغير) - سأضعها مختصرة ولكن في الكود النهائي كاملة */
 :root {
   --bg: #f8fafc;
   --surface: #ffffff;
@@ -33,6 +32,7 @@ body {
   min-height:100vh;
   position: relative;
 }
+/* علامة مائية خلفية خفيفة جداً في الواجهة الرئيسية (تظهر بعد تسجيل الدخول) */
 body::before {
   content: "";
   position: fixed;
@@ -60,23 +60,33 @@ body::after {
   z-index: 0;
   font-family: monospace;
 }
+/* شاشة تسجيل الدخول */
 #loginScreen {
   position:fixed; inset:0; background:linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   display:flex; align-items:center; justify-content:center; z-index:9999;
 }
 .login-box {
   background:var(--surface); border-radius:32px;
-  padding:50px 40px; width:400px; text-align:center;
+  padding:40px 40px 50px; width:420px; text-align:center;
   box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.02);
   border:1px solid rgba(0,0,0,0.05);
 }
-.login-box h1 { font-size:2rem; font-weight:900; background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 8px; }
+.login-logo {
+  width: 140px;
+  height: auto;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  background: #f8fafc;
+  padding: 10px;
+}
+.login-box h1 { font-size:1.8rem; font-weight:900; background: linear-gradient(135deg, #f59e0b, #d97706); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 8px; }
 .login-box .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 30px; }
 .login-box input { width:100%; padding:14px; margin:10px 0; background:#f8fafc; border:1px solid var(--border); border-radius:16px; color:var(--text); font-size:1rem; transition:0.2s; }
 .login-box input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px rgba(245,158,11,0.2); }
 .login-box button { width:100%; padding:14px; background:var(--accent); border:none; border-radius:16px; font-weight:700; cursor:pointer; color:#fff; font-size:1rem; transition:0.2s; margin-top:10px; }
 .login-box button:hover { background:var(--accent-dark); transform:translateY(-1px); }
 .login-err { color:var(--danger); margin-top:15px; font-size:0.85rem; }
+/* باقي التنسيقات الخاصة بالواجهة الرئيسية (كما هي دون تغيير) */
 #app { display:none; flex-direction:column; min-height:100vh; position:relative; z-index:1; }
 .topbar {
   background:var(--surface); border-bottom:1px solid var(--border);
@@ -135,8 +145,10 @@ td { padding:14px; border-bottom:1px solid var(--border); }
 <body>
 <div id="loginScreen">
   <div class="login-box">
+    <!-- شعار كبير وواضح في واجهة تسجيل الدخول -->
+    <img src="logo-badran.png" alt="Badran CNC" class="login-logo" onerror="this.style.display='none'">
     <h1>BADRAN CNC</h1>
-    <div class="sub">نظام إدارة المبيعات</div>
+    <div class="sub">نظام إدارة المبيعات المتزامن</div>
     <input type="text" id="loginUsername" placeholder="اسم المستخدم">
     <input type="password" id="loginPass" placeholder="كلمة السر" onkeypress="if(event.key==='Enter') checkLogin()">
     <button onclick="checkLogin()">دخول</button>
@@ -189,7 +201,7 @@ function saveProducts() { saveAllData(); }
 function saveInvoices() { saveAllData(); }
 function saveReturns() { saveAllData(); }
 
-// ------------------- دوال التصدير والاستيراد (للمزامنة اليدوية) -------------------
+// ------------------- دوال التصدير والاستيراد للمزامنة اليدوية -------------------
 function exportData() {
   const data = { products, invoices, returns, adminPassword, version: '1.0', exportDate: new Date().toISOString() };
   const dataStr = JSON.stringify(data, null, 2);
@@ -276,7 +288,7 @@ async function printShortagesPDF() {
   element.style.fontFamily = 'Cairo';
   element.innerHTML = `<div style="text-align:center;"><h2>Badran CNC</h2><h3>تقرير النواقص</h3><p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p></div>
     <table border="1"><thead><tr><th>#</th><th>المنتج</th><th>الرصيد</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead>
-    <tbody>${low.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.stock}</td><td>${p.buyPrice}</td><td>${p.sellPrice}</td></tr>`).join('')}</tbody></table>`;
+    <tbody>${low.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.stock}</td><td>${p.buyPrice}</td><td>${p.sellPrice}</td></tr>`).join('')}</tbody></tr>`;
   document.body.appendChild(element);
   const canvas = await html2canvas(element);
   const imgData = canvas.toDataURL('image/png');
@@ -385,7 +397,7 @@ function renderInvoicesTable(invList) {
   if(!invList.length) return '<div class="empty-state">لا توجد فواتير</div>';
   let h='<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th></tr></thead><tbody>';
   invList.forEach((inv,i)=>{ h+=`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td></tr>`; });
-  return h+'</tbody></tr></div>';
+  return h+'</tbody></table></div>';
 }
 function renderProductsPage() {
   let html = `<div class="section"><div class="section-title">📦 المنتجات</div><div class="form-row"><div class="form-group"><label>🔍 بحث</label><input type="text" id="searchProduct" placeholder="اسم المنتج..."></div></div>
@@ -401,7 +413,7 @@ function renderProductsList() {
   let html = '';
   filtered.forEach((p,i)=>{
     let badge = (p.stock<LOW_STOCK_THRESHOLD && currentUser.role==='admin') ? '<span class="badge-warning">ناقص</span>' : '';
-    html+=`<tr data-id="${p.id}"><td>${i+1}</td><td>${p.name} ${badge}</td><td>${p.sellPrice} ج</td>${currentUser.role==='admin'?`<td>${p.buyPrice} ج</td>`:''}<td class="${p.stock<LOW_STOCK_THRESHOLD?'tag-red':''}">${p.stock}</td><td>${currentUser.role==='admin'?`<button class="btn-info btn-sm" onclick="editProduct(${p.id})">✏️</button> <button class="btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>`:''}</td></tr>`;
+    html+=`<tr data-id="${p.id}"><td>${i+1}</td><td>${p.name} ${badge}</td><td>${p.sellPrice} ج</td>${currentUser.role==='admin'?`<td>${p.buyPrice} ج</td>`:''}<td class="${p.stock<LOW_STOCK_THRESHOLD?'tag-red':''}">${p.stock}</td><td>${currentUser.role==='admin'?`<button class="btn-info btn-sm" onclick="editProduct(${p.id})">✏️</button> <button class="btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>`:''}ndon</td></tr>`;
   });
   document.getElementById('productsList').innerHTML = html;
 }
@@ -478,7 +490,7 @@ function saveInvoice() {
 function renderInvoicesPage() {
   let html = `<div class="section"><div class="section-title">📄 الفواتير</div><div id="invoicesList"></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
-  let invHtml = invoices.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th></th></tr></thead><tbody>${invoices.map((inv,i)=>`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️</button> <button class="btn-success btn-sm" onclick="printInvoiceAsPDF(invoices.find(i=>i.id===${inv.id}))">🖨️ PDF</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">لا توجد فواتير</div>';
+  let invHtml = invoices.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th></th><tr></thead><tbody>${invoices.map((inv,i)=>`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️</button> <button class="btn-success btn-sm" onclick="printInvoiceAsPDF(invoices.find(i=>i.id===${inv.id}))">🖨️ PDF</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">لا توجد فواتير</div>';
   document.getElementById('invoicesList').innerHTML = invHtml;
 }
 function viewInvoice(id) { let inv=invoices.find(i=>i.id===id); if(inv) alert(`العميل: ${inv.customer}\nالتاريخ: ${inv.date}\n${inv.items.map(i=>`${i.name} - ${i.quantity} × ${i.sellPrice} = ${i.total}`).join('\n')}\nالإجمالي: ${inv.total} ج`); }
@@ -492,7 +504,7 @@ function renderReturnsPage() {
 }
 function loadReturnInvoice() {
   let id=document.getElementById('retInvoiceSelect').value; if(!id) return alert("اختر"); let inv=invoices.find(i=>i.id==id); if(!inv) return;
-  let html=`<div class="tbl-wrap"><table><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>كمية الإرجاع</th></tr></thead><tbody>`;
+  let html=`<div class="tbl-wrap"><td><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>كمية الإرجاع</th></tr></thead><tbody>`;
   inv.items.forEach((it,i)=>{ html+=`<tr><td>${it.name}</td><td>${it.quantity}</td><td>${it.sellPrice} ج</td><td><input type="number" id="retQty${i}" min="0" max="${it.quantity}" value="0" style="width:80px;"></td></tr>`; });
   html+=`</tbody></table><input type="hidden" id="returnInvId" value="${inv.id}">`; document.getElementById('returnItemsArea').innerHTML=html;
 }
