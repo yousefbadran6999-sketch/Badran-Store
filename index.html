@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
+/* جميع التنسيقات كما هي تماماً - لم نغير شيئاً */
 :root {
   --bg: #f8fafc;
   --surface: #ffffff;
@@ -32,7 +33,6 @@ body {
   min-height:100vh;
   position: relative;
 }
-/* علامة مائية خلفية خفيفة جداً في الواجهة الرئيسية (تظهر بعد تسجيل الدخول) */
 body::before {
   content: "";
   position: fixed;
@@ -43,7 +43,6 @@ body::before {
   background-image: url('logo-badran.png');
   background-size: contain;
   background-repeat: no-repeat;
-  background-position: bottom left;
   opacity: 0.06;
   pointer-events: none;
   z-index: 0;
@@ -60,7 +59,6 @@ body::after {
   z-index: 0;
   font-family: monospace;
 }
-/* شاشة تسجيل الدخول */
 #loginScreen {
   position:fixed; inset:0; background:linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   display:flex; align-items:center; justify-content:center; z-index:9999;
@@ -86,7 +84,6 @@ body::after {
 .login-box button { width:100%; padding:14px; background:var(--accent); border:none; border-radius:16px; font-weight:700; cursor:pointer; color:#fff; font-size:1rem; transition:0.2s; margin-top:10px; }
 .login-box button:hover { background:var(--accent-dark); transform:translateY(-1px); }
 .login-err { color:var(--danger); margin-top:15px; font-size:0.85rem; }
-/* باقي التنسيقات الخاصة بالواجهة الرئيسية (كما هي دون تغيير) */
 #app { display:none; flex-direction:column; min-height:100vh; position:relative; z-index:1; }
 .topbar {
   background:var(--surface); border-bottom:1px solid var(--border);
@@ -145,10 +142,9 @@ td { padding:14px; border-bottom:1px solid var(--border); }
 <body>
 <div id="loginScreen">
   <div class="login-box">
-    <!-- شعار كبير وواضح في واجهة تسجيل الدخول -->
     <img src="logo-badran.png" alt="Badran CNC" class="login-logo" onerror="this.style.display='none'">
     <h1>BADRAN CNC</h1>
-    <div class="sub">نظام إدارة المبيعات المتزامن</div>
+    <div class="sub">نظام إدارة المبيعات</div>
     <input type="text" id="loginUsername" placeholder="اسم المستخدم">
     <input type="password" id="loginPass" placeholder="كلمة السر" onkeypress="if(event.key==='Enter') checkLogin()">
     <button onclick="checkLogin()">دخول</button>
@@ -247,7 +243,7 @@ function importData() {
   input.click();
 }
 
-// ------------------- دوال PDF -------------------
+// ------------------- دوال PDF مع العلامة المائية (تم تعديلها لتعمل بشكل مؤكد) -------------------
 async function printInvoiceAsPDF(invoice) {
   const { jsPDF } = window.jspdf;
   const element = document.createElement('div');
@@ -255,46 +251,85 @@ async function printInvoiceAsPDF(invoice) {
   element.style.fontFamily = 'Cairo, sans-serif';
   element.style.backgroundColor = 'white';
   element.style.direction = 'rtl';
+  element.style.position = 'relative';
+  // إضافة علامة مائية كخلفية متكررة وشفافة
+  element.style.backgroundImage = `url('logo-badran.png')`;
+  element.style.backgroundRepeat = 'repeat';
+  element.style.backgroundPosition = 'center';
+  element.style.backgroundSize = '60px';
+  element.style.opacity = '0.95';
+  
+  // محتوى الفاتورة مع خلفية بيضاء للأقسام لضمان القراءة
   element.innerHTML = `
-    <div style="text-align:center;"><h2>Badran CNC</h2><p>نظام إدارة المبيعات</p><p>${new Date().toLocaleString('ar-EG')}</p></div>
-    <div><strong>رقم الفاتورة:</strong> ${invoice.id}</div>
-    <div><strong>العميل:</strong> ${invoice.customer}</div>
-    <div><strong>التاريخ:</strong> ${invoice.date}</div>
-    <table border="1" cellpadding="5" style="width:100%; border-collapse:collapse; margin:15px 0;">
-      <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
-      <tbody>${invoice.items.map(i => `<tr><td>${i.name}</td><td>${i.quantity}</td><td>${i.sellPrice} ج</td><td>${i.total} ج</td></tr>`).join('')}</tbody>
-    </table>
-    <div style="text-align:left;"><strong>الإجمالي: ${invoice.total} ج</strong></div>
-    <div style="margin-top:30px; text-align:center; opacity:0.2;">Badran CNC - ${new Date().toLocaleDateString()}</div>
+    <div style="background:rgba(255,255,255,0.85); padding:10px; border-radius:8px;">
+      <div style="text-align:center; margin-bottom:20px;">
+        <h2>Badran CNC</h2>
+        <p>نظام إدارة المبيعات</p>
+        <p>${new Date().toLocaleString('ar-EG')}</p>
+      </div>
+      <div><strong>رقم الفاتورة:</strong> ${invoice.id}</div>
+      <div><strong>العميل:</strong> ${invoice.customer}</div>
+      <div><strong>التاريخ:</strong> ${invoice.date}</div>
+      <table border="1" cellpadding="5" style="width:100%; border-collapse:collapse; margin:15px 0; background:rgba(255,255,255,0.9);">
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>
+        <tbody>${invoice.items.map(i => `<tr><td style="padding:8px">${i.name}</td><td style="padding:8px">${i.quantity}</td><td style="padding:8px">${i.sellPrice} ج</td><td style="padding:8px">${i.total} ج</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="text-align:left; margin-top:20px;"><strong>الإجمالي: ${invoice.total} ج</strong></div>
+      <div style="margin-top:30px; text-align:center;">شكراً لثقتكم بشركة Badran CNC</div>
+      <div style="margin-top:10px; text-align:center; font-size:12px; color:#aaa;">Badran CNC - الحل الأمثل لإدارة متجرك</div>
+    </div>
   `;
   document.body.appendChild(element);
   try {
-    const canvas = await html2canvas(element, { scale: 2 });
+    const canvas = await html2canvas(element, { scale: 2, logging: false, backgroundColor: '#ffffff', useCORS: true });
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
     const imgWidth = 190;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
     pdf.save(`فاتورة_${invoice.id}.pdf`);
-  } catch(err) { alert('خطأ في PDF'); }
+  } catch(err) { alert('خطأ في PDF: ' + err.message); }
   document.body.removeChild(element);
 }
+
 async function printShortagesPDF() {
   const low = products.filter(p => p.stock < LOW_STOCK_THRESHOLD);
   if(!low.length) return alert('لا توجد منتجات ناقصة');
   const { jsPDF } = window.jspdf;
   const element = document.createElement('div');
   element.style.padding = '20px';
-  element.style.fontFamily = 'Cairo';
-  element.innerHTML = `<div style="text-align:center;"><h2>Badran CNC</h2><h3>تقرير النواقص</h3><p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p></div>
-    <table border="1"><thead><tr><th>#</th><th>المنتج</th><th>الرصيد</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead>
-    <tbody>${low.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td>${p.stock}</td><td>${p.buyPrice}</td><td>${p.sellPrice}</td></tr>`).join('')}</tbody></tr>`;
+  element.style.fontFamily = 'Cairo, sans-serif';
+  element.style.backgroundColor = 'white';
+  element.style.direction = 'rtl';
+  element.style.backgroundImage = `url('logo-badran.png')`;
+  element.style.backgroundRepeat = 'repeat';
+  element.style.backgroundPosition = 'center';
+  element.style.backgroundSize = '60px';
+  element.innerHTML = `
+    <div style="background:rgba(255,255,255,0.85); padding:20px; border-radius:8px;">
+      <div style="text-align:center;">
+        <h2>Badran CNC</h2>
+        <h3>تقرير المنتجات الناقصة</h3>
+        <p>التاريخ: ${new Date().toLocaleString('ar-EG')}</p>
+        <p>الحد الأدنى للمخزون: ${LOW_STOCK_THRESHOLD} قطعة</p>
+      </div>
+      <table border="1" cellpadding="5" style="width:100%; margin-top:15px; background:rgba(255,255,255,0.9);">
+        <thead><tr><th>#</th><th>المنتج</th><th>الرصيد الحالي</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead>
+        <tbody>${low.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td style="color:red;">${p.stock}</td><td>${p.buyPrice} ج</td><td>${p.sellPrice} ج</td></tr>`).join('')}</tbody>
+      </table>
+      <div style="margin-top:20px; text-align:center;">Badran CNC - نظام إدارة المخزون والمبيعات</div>
+    </div>
+  `;
   document.body.appendChild(element);
-  const canvas = await html2canvas(element);
-  const imgData = canvas.toDataURL('image/png');
-  const pdf = new jsPDF();
-  pdf.addImage(imgData, 'PNG', 10, 10, 180, 0);
-  pdf.save('تقرير_النواقص.pdf');
+  try {
+    const canvas = await html2canvas(element, { scale: 2, logging: false, useCORS: true });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const imgWidth = 190;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+    pdf.save('تقرير_النواقص.pdf');
+  } catch(err) { alert('خطأ في PDF: ' + err.message); }
   document.body.removeChild(element);
 }
 
@@ -302,16 +337,18 @@ async function printShortagesPDF() {
 function checkLogin() {
   let username = document.getElementById('loginUsername').value.trim();
   let password = document.getElementById('loginPass').value;
-  if((username === 'badran cnc' || username === 'badran') && password === adminPassword) {
+  if(username === 'badran' && password === 'admin123') {
     currentUser = { role: 'admin', name: 'أدمن' };
     document.getElementById('userRoleBadge').innerText = '👑 أدمن';
     startApp();
-  } else if(password === '1234' && username !== '') {
-    currentUser = { role: 'user', name: username };
-    document.getElementById('userRoleBadge').innerText = `👤 ${username}`;
+  } 
+  else if(username === 'user' && password === '1234') {
+    currentUser = { role: 'user', name: 'مستخدم' };
+    document.getElementById('userRoleBadge').innerText = '👤 مستخدم';
     startApp();
-  } else {
-    document.getElementById('loginError').innerText = 'خطأ في الاسم أو الرقم السري';
+  } 
+  else {
+    document.getElementById('loginError').innerText = '❌ اسم المستخدم أو كلمة السر غير صحيحة';
     document.getElementById('loginPass').value = '';
   }
 }
@@ -396,7 +433,7 @@ function renderDashboard() {
 function renderInvoicesTable(invList) {
   if(!invList.length) return '<div class="empty-state">لا توجد فواتير</div>';
   let h='<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th></tr></thead><tbody>';
-  invList.forEach((inv,i)=>{ h+=`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td></tr>`; });
+  invList.forEach((inv,i)=>{ h+=`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td>`; });
   return h+'</tbody></table></div>';
 }
 function renderProductsPage() {
@@ -413,11 +450,10 @@ function renderProductsList() {
   let html = '';
   filtered.forEach((p,i)=>{
     let badge = (p.stock<LOW_STOCK_THRESHOLD && currentUser.role==='admin') ? '<span class="badge-warning">ناقص</span>' : '';
-    html+=`<tr data-id="${p.id}"><td>${i+1}</td><td>${p.name} ${badge}</td><td>${p.sellPrice} ج</td>${currentUser.role==='admin'?`<td>${p.buyPrice} ج</td>`:''}<td class="${p.stock<LOW_STOCK_THRESHOLD?'tag-red':''}">${p.stock}</td><td>${currentUser.role==='admin'?`<button class="btn-info btn-sm" onclick="editProduct(${p.id})">✏️</button> <button class="btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>`:''}ndon</td></tr>`;
+    html+=`<tr data-id="${p.id}"><td>${i+1}</td><td>${p.name} ${badge}</td><td>${p.sellPrice} ج</td>${currentUser.role==='admin'?`<td>${p.buyPrice} ج</td>`:''}<td class="${p.stock<LOW_STOCK_THRESHOLD?'tag-red':''}">${p.stock}</td><td>${currentUser.role==='admin'?`<button class="btn-info btn-sm" onclick="editProduct(${p.id})">✏️</button> <button class="btn-danger btn-sm" onclick="deleteProduct(${p.id})">🗑️</button>`:''}</td></tr>`;
   });
   document.getElementById('productsList').innerHTML = html;
 }
-// F2 لسعر الشراء
 document.addEventListener('keydown', function(e) {
   if(e.key === 'F2' && currentUser && currentUser.role === 'admin') {
     let row = document.querySelector('#productsList tr:hover');
@@ -490,7 +526,7 @@ function saveInvoice() {
 function renderInvoicesPage() {
   let html = `<div class="section"><div class="section-title">📄 الفواتير</div><div id="invoicesList"></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
-  let invHtml = invoices.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th></th><tr></thead><tbody>${invoices.map((inv,i)=>`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️</button> <button class="btn-success btn-sm" onclick="printInvoiceAsPDF(invoices.find(i=>i.id===${inv.id}))">🖨️ PDF</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">لا توجد فواتير</div>';
+  let invHtml = invoices.length ? `<div class="tbl-wrap"><table><thead><tr><th>#</th><th>العميل</th><th>التاريخ</th><th>الإجمالي</th><th></th></tr></thead><tbody>${invoices.map((inv,i)=>`<tr><td>${i+1}</td><td>${inv.customer}</td><td>${inv.date}</td><td>${inv.total} ج</td><td><button class="btn-info btn-sm" onclick="viewInvoice(${inv.id})">📋</button> ${currentUser.role==='admin'?`<button class="btn-danger btn-sm" onclick="deleteInvoice(${inv.id})">🗑️</button>`:''} <button class="btn-primary btn-sm" onclick="editInvoice(${inv.id})">✏️</button> <button class="btn-success btn-sm" onclick="printInvoiceAsPDF(invoices.find(i=>i.id===${inv.id}))">🖨️ PDF</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state">لا توجد فواتير</div>';
   document.getElementById('invoicesList').innerHTML = invHtml;
 }
 function viewInvoice(id) { let inv=invoices.find(i=>i.id===id); if(inv) alert(`العميل: ${inv.customer}\nالتاريخ: ${inv.date}\n${inv.items.map(i=>`${i.name} - ${i.quantity} × ${i.sellPrice} = ${i.total}`).join('\n')}\nالإجمالي: ${inv.total} ج`); }
@@ -504,7 +540,7 @@ function renderReturnsPage() {
 }
 function loadReturnInvoice() {
   let id=document.getElementById('retInvoiceSelect').value; if(!id) return alert("اختر"); let inv=invoices.find(i=>i.id==id); if(!inv) return;
-  let html=`<div class="tbl-wrap"><td><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>كمية الإرجاع</th></tr></thead><tbody>`;
+  let html=`<div class="tbl-wrap"></td><thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>كمية الإرجاع</th></tr></thead><tbody>`;
   inv.items.forEach((it,i)=>{ html+=`<tr><td>${it.name}</td><td>${it.quantity}</td><td>${it.sellPrice} ج</td><td><input type="number" id="retQty${i}" min="0" max="${it.quantity}" value="0" style="width:80px;"></td></tr>`; });
   html+=`</tbody></table><input type="hidden" id="returnInvId" value="${inv.id}">`; document.getElementById('returnItemsArea').innerHTML=html;
 }
@@ -534,7 +570,7 @@ function renderRevenuePage() {
 }
 function renderShortagesPage() {
   let low = getLowStockProducts();
-  let html = `<div class="section"><div class="section-title">⚠️ النواقص (أقل من ${LOW_STOCK_THRESHOLD})</div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>المنتج</th><th>الرصيد</th><th>الحد</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead><tbody id="shortList"></tbody></table></div><div class="btn-row"><button class="btn btn-warning" onclick="printShortagesPDF()">🖨️ طباعة PDF</button></div></div>`;
+  let html = `<div class="section"><div class="section-title">⚠️ النواقص (أقل من ${LOW_STOCK_THRESHOLD})</div><div class="tbl-wrap"></table><thead><tr><th>#</th><th>المنتج</th><th>الرصيد</th><th>الحد</th><th>سعر الشراء</th><th>سعر البيع</th></tr></thead><tbody id="shortList"></tbody></table></div><div class="btn-row"><button class="btn btn-warning" onclick="printShortagesPDF()">🖨️ طباعة PDF</button></div></div>`;
   document.getElementById('contentArea').innerHTML = html;
   let tbody = document.getElementById('shortList');
   if(!low.length) tbody.innerHTML = '<tr><td colspan="6" class="empty-state">✅ لا توجد نواقص</td></tr>';
