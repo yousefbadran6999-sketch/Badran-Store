@@ -857,8 +857,17 @@ function saveInvoice(isInstallment){
   let inv={id:invId,serial:generateSerial(invId),customer:cust,phone,date:new Date().toLocaleString('ar-EG'),items:JSON.parse(JSON.stringify(currentInvoiceItems)),total,isInstallment,locked:true};
   invoices.unshift(inv);saveAll();
   clearInvoice();document.getElementById('customerName').value='';document.getElementById('customerPhone').value='';
-  if(isInstallment){openInstallmentSetup(inv);}
-  else{showToast('✅ تم حفظ الفاتورة');switchTab('invoices');}
+  if(isInstallment){
+    openInstallmentSetup(inv);
+  } else {
+    // عرض خيار الطباعة مباشرة
+    showModal('<div class="modal-title">✅ تم حفظ الفاتورة</div>'
+      +'<div style="text-align:center;padding:10px 0;color:var(--muted)">فاتورة رقم: <strong>'+inv.serial+'</strong></div>'
+      +'<div class="modal-footer" style="justify-content:center;gap:16px">'
+      +'<button class="btn btn-success" onclick="closeModal();printInvoicePDF('+inv.id+')">🖨️ طباعة الفاتورة</button>'
+      +'<button class="btn btn-ghost" onclick="closeModal()">تخطي</button>'
+      +'</div>');
+  }
 }
 
 // ============================================================
@@ -1377,7 +1386,7 @@ function buildPDFFooter(pdf) {
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(148, 163, 184);
-  pdf.text('Badran CNC', pageW/2, pageH - 8, {align:'center'});
+  pdf.text('Badran CNC', 105, pageH - 8, {align:'center'});
 }
 
 function buildPDFTable(pdf, headers, rows, startY) {
