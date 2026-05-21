@@ -1452,133 +1452,165 @@ function buildPDFTable(pdf, headers, rows, startY) {
   return y + 4;
 }
 
+
+// ============================================================
+// نظام الطباعة — HTML مباشرة (عربي واضح 100%)
+// ============================================================
+
+function getPrintStyles() {
+  return '<style>'
+    + '@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap");'
+    + '* { margin:0; padding:0; box-sizing:border-box; }'
+    + 'body { font-family:"Cairo",Arial,sans-serif; direction:rtl; background:#fff; color:#1e293b; padding:20px; }'
+    + '.header { text-align:center; margin-bottom:20px; position:relative; }'
+    + '.logo { width:80px; height:80px; object-fit:contain; border-radius:50%; margin-bottom:8px; }'
+    + '.company-name { font-size:22px; font-weight:900; color:#f59e0b; margin:4px 0; }'
+    + '.report-title { font-size:16px; font-weight:700; color:#1e293b; margin:4px 0; }'
+    + '.report-sub { font-size:11px; color:#64748b; margin:4px 0; }'
+    + '.divider { border:none; border-top:2px solid #f59e0b; margin:14px 0; }'
+    + '.info-box { display:flex; justify-content:space-between; margin-bottom:16px; background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid #e2e8f0; }'
+    + '.info-item { font-size:12px; } .info-item strong { font-weight:700; }'
+    + '.qr-section { display:flex; align-items:center; gap:16px; margin-bottom:16px; }'
+    + '.serial-text { font-family:monospace; font-size:11px; color:#64748b; margin-top:4px; }'
+    + 'table { width:100%; border-collapse:collapse; margin:16px 0; font-size:12px; }'
+    + 'th { background:#fef3c7; color:#92400e; padding:10px 12px; text-align:center; border:1px solid #fcd34d; font-weight:700; }'
+    + 'td { padding:9px 12px; text-align:center; border:1px solid #e2e8f0; }'
+    + 'tr:nth-child(even) td { background:#f8fafc; }'
+    + '.total-box { background:#fef3c7; border:1px solid #fcd34d; border-radius:8px; padding:12px 20px; text-align:left; margin-top:8px; }'
+    + '.total-label { font-size:13px; color:#92400e; }'
+    + '.total-value { font-size:20px; font-weight:900; color:#d97706; }'
+    + '.footer { text-align:center; margin-top:30px; border-top:1px solid #e2e8f0; padding-top:12px; color:#94a3b8; font-size:11px; }'
+    + '.stats-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px; }'
+    + '.stat-item { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; text-align:center; }'
+    + '.stat-val { font-size:18px; font-weight:900; color:#f59e0b; }'
+    + '.stat-lbl { font-size:10px; color:#64748b; }'
+    + '.watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-20deg); opacity:0.04; z-index:0; pointer-events:none; }'
+    + '@media print { body{padding:10px} .watermark{position:fixed;} }'
+    + '</style>';
+}
+
+function getLogoHTML() {
+  return '<img class="logo" src="' + LOGO_B64 + '" onerror="this.style.display=\'none\'">';
+}
+
+function printHTML(htmlContent, title) {
+  var win = window.open('', '_blank', 'width=794,height=1000');
+  if (!win) { showToast('افتح النوافذ المنبثقة في الإعدادات', 'error'); return; }
+  win.document.write('<!DOCTYPE html><html lang="ar" dir="rtl"><head>'
+    + '<meta charset="UTF-8">'
+    + '<title>' + title + '</title>'
+    + getPrintStyles()
+    + '</head><body>'
+    + '<img class="watermark" src="' + LOGO_B64 + '" width="400">'
+    + htmlContent
+    + '<div class="footer">Badran CNC — نظام إدارة المبيعات</div>'
+    + '<script>window.onload=function(){window.print();}<\/script>'
+    + '</body></html>');
+  win.document.close();
+}
+
 function printInvoicePDF(id) {
   var inv = invoices.find(function(i){ return i.id === id; });
   if (!inv) return;
   closeModal();
-  showLoading();
 
-  setTimeout(function() {
-    try {
-      var pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
-      var pageW = 210;
-      var y = buildPDFHeader(pdf, 'فاتورة مبيعات', '');
+  var itemsRows = inv.items.map(function(it) {
+    return '<tr>'
+      + '<td style="text-align:right;font-weight:600">' + it.name + '</td>'
+      + '<td>' + it.quantity + '</td>'
+      + '<td>' + it.sellPrice.toLocaleString('ar-EG') + ' ج</td>'
+      + '<td style="font-weight:700">' + it.total.toLocaleString('ar-EG') + ' ج</td>'
+      + '</tr>';
+  }).join('');
 
-      // QR Code
-      var qrContainer = document.createElement('div');
-      qrContainer.style.cssText = 'position:absolute;top:-9999px;left:-9999px;background:white;padding:4px;';
-      document.body.appendChild(qrContainer);
-      try {
-        if (typeof QRCode !== 'undefined') {
-          new QRCode(qrContainer, {text: inv.serial || String(inv.id), width:80, height:80});
-        }
-      } catch(e) {}
+  var html = '<div class="header">'
+    + getLogoHTML()
+    + '<div class="company-name">Badran CNC</div>'
+    + '<div class="report-title">فاتورة مبيعات</div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<div class="info-box">'
+    + '<div class="info-item"><strong>العميل:</strong> ' + inv.customer + '</div>'
+    + '<div class="info-item"><strong>الهاتف:</strong> ' + (inv.phone||'-') + '</div>'
+    + '<div class="info-item"><strong>التاريخ:</strong> ' + inv.date + '</div>'
+    + '<div class="info-item"><strong>السيريال:</strong> <span style="font-family:monospace;font-size:11px">' + (inv.serial||'-') + '</span></div>'
+    + '</div>'
+    + '<table>'
+    + '<thead><tr><th>المنتج</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead>'
+    + '<tbody>' + itemsRows + '</tbody>'
+    + '</table>'
+    + '<div class="total-box">'
+    + '<div class="total-label">الإجمالي الكلي</div>'
+    + '<div class="total-value">' + inv.total.toLocaleString('ar-EG') + ' ج</div>'
+    + '</div>'
+    + '<div style="text-align:center;margin-top:20px;color:#94a3b8;font-size:12px">شكراً لثقتكم بشركة Badran CNC</div>';
 
-      // انتظر QR يتولد
-      setTimeout(function() {
-        // رسم QR في الـ PDF
-        try {
-          var qrCanvas = qrContainer.querySelector('canvas');
-          if (qrCanvas) {
-            var qrData = qrCanvas.toDataURL('image/png');
-            pdf.addImage(qrData, 'PNG', 10, y, 28, 28);
-          }
-        } catch(e) {}
-        document.body.removeChild(qrContainer);
-
-        // السيريال تحت QR
-        pdf.setFontSize(7);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(100, 116, 139);
-        pdf.text(inv.serial || '', 24, y + 31, {align:'center'});
-
-        // بيانات العميل
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(30, 41, 59);
-        pdf.text('بيانات الفاتورة', 200, y + 6, {align:'right'});
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text('العميل: ' + inv.customer, 200, y + 13, {align:'right'});
-        pdf.text('الهاتف: ' + (inv.phone || '-'), 200, y + 20, {align:'right'});
-        pdf.text('التاريخ: ' + inv.date, 200, y + 27, {align:'right'});
-        y += 36;
-
-        // جدول المنتجات
-        var rows = inv.items.map(function(it) {
-          return [it.name, it.quantity, it.sellPrice.toLocaleString('ar-EG') + ' ج', it.total.toLocaleString('ar-EG') + ' ج'];
-        });
-        y = buildPDFTable(pdf, ['المنتج', 'الكمية', 'السعر', 'الإجمالي'], rows, y);
-
-        // الإجمالي
-        pdf.setFillColor(254, 243, 199);
-        pdf.rect(120, y, 80, 10, 'F');
-        pdf.setFontSize(12);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(146, 64, 14);
-        pdf.text('الإجمالي: ' + inv.total.toLocaleString('ar-EG') + ' ج', 196, y + 7, {align:'right'});
-        y += 16;
-
-        // شكر
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(100, 116, 139);
-        pdf.text('شكراً لثقتكم بشركة Badran CNC', pageW/2, y + 6, {align:'center'});
-
-        buildPDFFooter(pdf);
-        pdf.save('فاتورة_' + (inv.serial || inv.id) + '.pdf');
-        hideLoading();
-      }, 300);
-
-    } catch(e) {
-      showToast('خطأ في PDF: ' + e.message, 'error');
-      hideLoading();
-    }
-  }, 50);
+  printHTML(html, 'فاتورة ' + (inv.serial||inv.id));
 }
 
 function printDailySalesPDF() {
   var today = new Date().toLocaleDateString('ar-EG');
   var todayInv = invoices.filter(function(inv){ return inv.date && inv.date.startsWith(today); });
   if (!todayInv.length) return showToast('لا توجد مبيعات اليوم', 'error');
-  showLoading();
-  setTimeout(function() {
-    try {
-      var pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
-      var total = todayInv.reduce(function(s,i){ return s+i.total; }, 0);
-      var y = buildPDFHeader(pdf, 'تقرير مبيعات اليوم', 'التاريخ: ' + new Date().toLocaleString('ar-EG'));
-      var rows = todayInv.map(function(inv, i) {
-        return [i+1, inv.customer, inv.phone||'-', inv.serial||'-', inv.total.toLocaleString('ar-EG') + ' ج'];
-      });
-      y = buildPDFTable(pdf, ['#', 'العميل', 'الهاتف', 'السيريال', 'الإجمالي'], rows, y);
-      pdf.setFillColor(254, 243, 199);
-      pdf.rect(120, y, 80, 10, 'F');
-      pdf.setFontSize(12); pdf.setFont('helvetica','bold'); pdf.setTextColor(146,64,14);
-      pdf.text('إجمالي اليوم: ' + total.toLocaleString('ar-EG') + ' ج', 196, y+7, {align:'right'});
-      buildPDFFooter(pdf);
-      pdf.save('مبيعات_اليوم_' + today + '.pdf');
-    } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
-    hideLoading();
-  }, 50);
+
+  var total = todayInv.reduce(function(s,i){ return s+i.total; }, 0);
+  var rows = todayInv.map(function(inv, i) {
+    return '<tr>'
+      + '<td>' + (i+1) + '</td>'
+      + '<td style="text-align:right">' + inv.customer + '</td>'
+      + '<td>' + (inv.phone||'-') + '</td>'
+      + '<td style="font-family:monospace;font-size:10px">' + (inv.serial||'-') + '</td>'
+      + '<td style="font-weight:700">' + inv.total.toLocaleString('ar-EG') + ' ج</td>'
+      + '</tr>';
+  }).join('');
+
+  var html = '<div class="header">'
+    + getLogoHTML()
+    + '<div class="company-name">Badran CNC</div>'
+    + '<div class="report-title">تقرير مبيعات اليوم</div>'
+    + '<div class="report-sub">التاريخ: ' + new Date().toLocaleString('ar-EG') + '</div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<div class="stats-bar">'
+    + '<div class="stat-item"><div class="stat-val">' + todayInv.length + '</div><div class="stat-lbl">فاتورة</div></div>'
+    + '<div class="stat-item"><div class="stat-val">' + total.toLocaleString('ar-EG') + '</div><div class="stat-lbl">إجمالي (ج)</div></div>'
+    + '</div>'
+    + '<table>'
+    + '<thead><tr><th>#</th><th>العميل</th><th>الهاتف</th><th>السيريال</th><th>الإجمالي</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>'
+    + '<div class="total-box"><div class="total-label">إجمالي اليوم</div><div class="total-value">' + total.toLocaleString('ar-EG') + ' ج</div></div>';
+
+  printHTML(html, 'مبيعات اليوم');
 }
 
 function printShortagesPDF() {
-  var low = products.filter(function(p){ return p.stock < LOW_STOCK; });
-  if (!low.length) return showToast('لا توجد نواقص', 'error');
-  showLoading();
-  setTimeout(function() {
-    try {
-      var pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
-      var y = buildPDFHeader(pdf, 'تقرير المنتجات الناقصة', 'الحد الادنى: ' + LOW_STOCK + ' | ' + new Date().toLocaleString('ar-EG'));
-      var rows = low.map(function(p,i){
-        return [i+1, p.name, p.stock, LOW_STOCK, p.sellPrice.toLocaleString('ar-EG') + ' ج'];
-      });
-      y = buildPDFTable(pdf, ['#', 'المنتج', 'الرصيد', 'الحد الادنى', 'سعر البيع'], rows, y);
-      buildPDFFooter(pdf);
-      pdf.save('تقرير_النواقص.pdf');
-    } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
-    hideLoading();
-  }, 50);
+  var low = products.filter(function(p){ return (p.warehouse||0)+(p.shop||0) < LOW_STOCK; });
+  if (!low.length) return showToast('لا توجد منتجات ناقصة', 'error');
+
+  var rows = low.map(function(p, i) {
+    return '<tr>'
+      + '<td>' + (i+1) + '</td>'
+      + '<td style="text-align:right;font-weight:600">' + p.name + '</td>'
+      + '<td style="color:#ef4444;font-weight:700">' + ((p.warehouse||0)+(p.shop||0)) + '</td>'
+      + '<td>' + LOW_STOCK + '</td>'
+      + '<td>' + p.sellPrice.toLocaleString('ar-EG') + ' ج</td>'
+      + '</tr>';
+  }).join('');
+
+  var html = '<div class="header">'
+    + getLogoHTML()
+    + '<div class="company-name">Badran CNC</div>'
+    + '<div class="report-title">تقرير المنتجات الناقصة</div>'
+    + '<div class="report-sub">التاريخ: ' + new Date().toLocaleString('ar-EG') + ' | الحد الأدنى: ' + LOW_STOCK + '</div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<table>'
+    + '<thead><tr><th>#</th><th>المنتج</th><th>الرصيد الحالي</th><th>الحد الأدنى</th><th>سعر البيع</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>';
+
+  printHTML(html, 'تقرير النواقص');
 }
 
 function printDebtorsPDF(type) {
@@ -1586,62 +1618,85 @@ function printDebtorsPDF(type) {
     return type === 'late' ? d.statusObj.label === 'متأخر' : true;
   });
   if (!debtors.length) return showToast('لا توجد بيانات', 'error');
-  showLoading();
-  setTimeout(function() {
-    try {
-      var pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
-      var title = type === 'late' ? 'تقرير العملاء المتأخرين' : 'تقرير جميع المديونين';
-      var y = buildPDFHeader(pdf, title, new Date().toLocaleString('ar-EG'));
-      var rows = debtors.map(function(d,i){
-        return [i+1, d.customerName, d.phone||'-', d.total.toLocaleString('ar-EG')+' ج', d.paid.toLocaleString('ar-EG')+' ج', d.remaining.toLocaleString('ar-EG')+' ج', d.statusObj.label];
-      });
-      y = buildPDFTable(pdf, ['#','العميل','الهاتف','الإجمالي','المدفوع','المتبقي','الحالة'], rows, y);
-      buildPDFFooter(pdf);
-      pdf.save(title + '.pdf');
-    } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
-    hideLoading();
-  }, 50);
+
+  var title = type === 'late' ? 'تقرير العملاء المتأخرين' : 'تقرير جميع المديونين';
+  var rows = debtors.map(function(d, i) {
+    return '<tr>'
+      + '<td>' + (i+1) + '</td>'
+      + '<td style="text-align:right;font-weight:600">' + d.customerName + '</td>'
+      + '<td>' + (d.phone||'-') + '</td>'
+      + '<td>' + d.total.toLocaleString('ar-EG') + ' ج</td>'
+      + '<td style="color:#10b981;font-weight:700">' + d.paid.toLocaleString('ar-EG') + ' ج</td>'
+      + '<td style="color:#ef4444;font-weight:700">' + d.remaining.toLocaleString('ar-EG') + ' ج</td>'
+      + '<td>' + d.statusObj.label + '</td>'
+      + '</tr>';
+  }).join('');
+
+  var html = '<div class="header">'
+    + getLogoHTML()
+    + '<div class="company-name">Badran CNC</div>'
+    + '<div class="report-title">' + title + '</div>'
+    + '<div class="report-sub">' + new Date().toLocaleString('ar-EG') + '</div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<table>'
+    + '<thead><tr><th>#</th><th>العميل</th><th>الهاتف</th><th>الإجمالي</th><th>المدفوع</th><th>المتبقي</th><th>الحالة</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>';
+
+  printHTML(html, title);
 }
 
 function printInventoryPDF() {
-  showLoading();
-  setTimeout(function() {
-    try {
-      var pdf = new window.jspdf.jsPDF({unit:'mm', format:'a4'});
-      var loc = _activeLocFilter || 'all';
-      var titles = {all:'جرد جميع المنتجات', shop:'جرد منتجات المحل', warehouse:'جرد منتجات المخزن'};
-      var y = buildPDFHeader(pdf, titles[loc] || 'جرد المنتجات', 'التاريخ: ' + new Date().toLocaleString('ar-EG'));
+  var loc = _activeLocFilter || 'all';
+  var titles = {all:'جرد جميع المنتجات', shop:'جرد منتجات المحل', warehouse:'جرد منتجات المخزن'};
+  var title = titles[loc] || 'جرد المنتجات';
 
-      // إحصائيات
-      var totalWH = products.reduce(function(s,p){ return s+(p.warehouse||0); }, 0);
-      var totalSH = products.reduce(function(s,p){ return s+(p.shop||0); }, 0);
-      var lowCount = products.filter(function(p){ return (p.warehouse||0)+(p.shop||0) < LOW_STOCK; }).length;
-      pdf.setFillColor(254,243,199); pdf.rect(10,y,190,10,'F');
-      pdf.setFontSize(9); pdf.setFont('helvetica','bold'); pdf.setTextColor(146,64,14);
-      pdf.text('المنتجات: ' + products.length, 195, y+7, {align:'right'});
-      pdf.text('المخزن: ' + totalWH, 155, y+7, {align:'right'});
-      pdf.text('المحل: ' + totalSH, 115, y+7, {align:'right'});
-      pdf.text('ناقص: ' + lowCount, 75, y+7, {align:'right'});
-      y += 14;
+  var list = products.filter(function(p){
+    if (loc === 'warehouse') return (p.warehouse||0) > 0;
+    return true;
+  });
 
-      var list = products.filter(function(p){
-        if (loc === 'warehouse') return (p.warehouse||0) > 0;
-        return true;
-      });
-      var rows = list.map(function(p,i){
-        var wh=p.warehouse||0, sh=p.shop||0, total=wh+sh;
-        var status = total===0 ? 'نفد' : total<LOW_STOCK ? 'ناقص' : 'متوفر';
-        if (loc==='shop') status = sh>0 ? 'بالمحل' : wh>0 ? 'بالمخزن' : 'نفد';
-        return [i+1, p.name, p.sellPrice.toLocaleString('ar-EG')+' ج', wh, sh, total, status];
-      });
-      y = buildPDFTable(pdf, ['#','المنتج','سعر البيع','المخزن','المحل','الإجمالي','الحالة'], rows, y);
-      buildPDFFooter(pdf);
-      pdf.save((titles[loc]||'جرد') + '.pdf');
-    } catch(e) { showToast('خطأ: ' + e.message, 'error'); }
-    hideLoading();
-  }, 50);
+  var totalWH = products.reduce(function(s,p){ return s+(p.warehouse||0); }, 0);
+  var totalSH = products.reduce(function(s,p){ return s+(p.shop||0); }, 0);
+  var lowCount = products.filter(function(p){ return (p.warehouse||0)+(p.shop||0)<LOW_STOCK; }).length;
+
+  var rows = list.map(function(p, i) {
+    var wh=p.warehouse||0, sh=p.shop||0, total=wh+sh;
+    var status = total===0?'نفد':total<LOW_STOCK?'ناقص':'متوفر';
+    if (loc==='shop') status = sh>0?'بالمحل':wh>0?'بالمخزن':'نفد';
+    var statusColor = total===0?'#ef4444':total<LOW_STOCK?'#f59e0b':'#10b981';
+    return '<tr>'
+      + '<td>' + (i+1) + '</td>'
+      + '<td style="text-align:right;font-weight:600">' + p.name + '</td>'
+      + '<td>' + p.sellPrice.toLocaleString('ar-EG') + ' ج</td>'
+      + '<td style="color:#3b82f6;font-weight:700">' + wh + '</td>'
+      + '<td style="color:#10b981;font-weight:700">' + sh + '</td>'
+      + '<td style="font-weight:900">' + total + '</td>'
+      + '<td style="color:' + statusColor + ';font-weight:700">' + status + '</td>'
+      + '</tr>';
+  }).join('');
+
+  var html = '<div class="header">'
+    + getLogoHTML()
+    + '<div class="company-name">Badran CNC</div>'
+    + '<div class="report-title">' + title + '</div>'
+    + '<div class="report-sub">التاريخ: ' + new Date().toLocaleString('ar-EG') + '</div>'
+    + '</div>'
+    + '<hr class="divider">'
+    + '<div class="stats-bar">'
+    + '<div class="stat-item"><div class="stat-val">' + list.length + '</div><div class="stat-lbl">منتج</div></div>'
+    + '<div class="stat-item"><div class="stat-val">' + totalWH + '</div><div class="stat-lbl">في المخزن</div></div>'
+    + '<div class="stat-item"><div class="stat-val">' + totalSH + '</div><div class="stat-lbl">في المحل</div></div>'
+    + '<div class="stat-item"><div class="stat-val" style="color:#ef4444">' + lowCount + '</div><div class="stat-lbl">ناقص</div></div>'
+    + '</div>'
+    + '<table>'
+    + '<thead><tr><th>#</th><th>المنتج</th><th>سعر البيع</th><th>المخزن</th><th>المحل</th><th>الإجمالي</th><th>الحالة</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table>';
+
+  printHTML(html, title);
 }
-
 
 </script>
 </body>
