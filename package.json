@@ -1,0 +1,50 @@
+{
+  "name": "badran-cnc",
+  "version": "1.0.0",
+  "description": "Badran CNC — نظام إدارة المبيعات",
+  "main": "main.js",
+  "author": "Badran CNC",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.badran.cnc",
+    "productName": "Badran CNC",
+    "icon": "logo-badran.png",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "logo-badran.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["ar"],
+      "language": "1025"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "files": [
+      "index.html",
+      "main.js",
+      "preload.js",
+      "logo-badran.png",
+      "logo-badran.ico",
+      "package.json"
+    ]
+  }
+}
