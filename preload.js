@@ -1,7 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// كشف API آمن للصفحة — بدون تعريض Node.js كاملاً
 contextBridge.exposeInMainWorld('electronAPI', {
-  readData:  ()     => ipcRenderer.invoke('read-data'),
-  writeData: (data) => ipcRenderer.invoke('write-data', data)
+  readData:         ()          => ipcRenderer.invoke('read-data'),
+  writeData:        (data)      => ipcRenderer.invoke('write-data', data),
+  showNotification: (title,body)=> ipcRenderer.invoke('show-notification', title, body),
+  backupData:       ()          => ipcRenderer.invoke('backup-data')
 });
