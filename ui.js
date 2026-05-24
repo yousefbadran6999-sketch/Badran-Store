@@ -29,7 +29,7 @@ function switchTab(tabId,skip){
   currentTab=tabId;
   document.querySelectorAll('.navtab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tabId));
   const R={dashboard:renderDashboard,products:renderProductsPage,sales:renderSalesPage,invoices:renderInvoicesPage,returns:renderReturnsPage,installments:renderInstallmentsPage,debtors:renderDebtorsPage,revenue:renderRevenuePage,shortages:renderShortagesPage,settings:renderSettingsPage};
-  if(R[tabId]) R[tabId]();
+  if(R[tabId]) { try { R[tabId](); } catch(e){ console.error('switchTab error:', e); } }
 }
 
 function renderTabs(){
@@ -55,15 +55,21 @@ function renderTabs(){
   document.getElementById('navTabs').innerHTML=html;
 }
 
-async function startApp(){
+function startApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='flex';
   renderTabs();
   switchTab('dashboard',true);
-  await loadData();
-  checkInstallmentAlerts();
-  startNotifChecker();
-  renderDashboard();
+  loadData().then(function(){
+    checkInstallmentAlerts();
+    startNotifChecker();
+    renderDashboard();
+  }).catch(function(){
+    // fallback لو loadData فشل
+    checkInstallmentAlerts();
+    startNotifChecker();
+    renderDashboard();
+  });
   // مزامنة دورية كل 2 دقيقة
   setInterval(async()=>{ if(isOnline){ await syncFromSupabase(); if(currentTab==='dashboard')renderDashboard(); showSyncStatus('متزامن ✅'); }},300000);
 }
@@ -78,3 +84,5 @@ function logout() {
   document.getElementById('loginPass').value = '';
   document.getElementById('loginError').innerText = '';
 }
+
+window.startApp = startApp;
