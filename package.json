@@ -9,11 +9,20 @@
     "start": "electron .",
     "build-win": "electron-builder --win",
     "build-mac": "electron-builder --mac",
-    "build-linux": "electron-builder --linux"
+    "build-linux": "electron-builder --linux",
+    "build:android": "npx cap sync android && npx cap open android",
+    "mobile:sync": "npx cap sync",
+    "mobile:run": "npx cap run android",
+    "android:fix": "node android-fix.js",
+    "android:build": "npx cap sync android && npx cap open android",
+    "build-win32": "electron-builder --win --ia32"
   },
   "devDependencies": {
-    "electron": "^29.0.0",
-    "electron-builder": "^24.0.0"
+    "electron": "22.3.27",
+    "electron-builder": "24.13.3",
+    "@capacitor/core": "5.0.0",
+    "@capacitor/cli": "5.0.0",
+    "@capacitor/android": "5.0.0"
   },
   "build": {
     "appId": "com.badran.cnc",
@@ -23,27 +32,42 @@
       "output": "dist"
     },
     "win": {
-      "target": "nsis",
-      "icon": "logo-badran.ico"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ],
+      "icon": "logo-badran.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": ["ar"],
-      "language": "1025"
-    },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Badran CNC"
     },
     "files": [
       "index.html",
       "main.js",
       "preload.js",
+      "logo-b64.js",
       "logo-badran.png",
-      "logo-badran.ico",
+      "config.js",
+      "db.js",
+      "ui.js",
+      "notifications.js",
+      "products.js",
+      "sales.js",
+      "invoices.js",
+      "returns.js",
+      "installments.js",
+      "customers.js",
+      "reports.js",
+      "print.js",
       "package.json"
     ]
   }
