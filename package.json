@@ -12,7 +12,9 @@
     "build-linux": "electron-builder --linux",
     "build:android": "npx cap sync android && npx cap open android",
     "mobile:sync": "npx cap sync",
-    "mobile:run": "npx cap run android"
+    "mobile:run": "npx cap run android",
+    "android:fix": "node android-fix.js",
+    "android:build": "npx cap sync android && npx cap open android"
   },
   "devDependencies": {
     "electron": "^29.0.0",
