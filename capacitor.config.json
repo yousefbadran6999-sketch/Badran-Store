@@ -5,23 +5,24 @@
   "server": {
     "androidScheme": "https",
     "allowNavigation": [
+      "*.supabase.co",
       "cmpiielkogwzfhurwqvn.supabase.co",
-      "*.supabase.co"
-    ]
+      "fonts.googleapis.com",
+      "cdnjs.cloudflare.com"
+    ],
+    "cleartext": true
   },
   "android": {
     "allowMixedContent": true,
     "backgroundColor": "#f8fafc",
-    "icon": "logo-badran.png"
-  },
-  "ios": {
-    "contentInset": "always"
+    "webContentsDebuggingEnabled": false
   },
   "plugins": {
     "SplashScreen": {
-      "launchShowDuration": 2000,
+      "launchShowDuration": 1500,
       "backgroundColor": "#f8fafc",
-      "showSpinner": false
+      "showSpinner": false,
+      "androidSplashResourceName": "splash"
     }
   }
 }
