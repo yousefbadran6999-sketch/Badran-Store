@@ -9,19 +9,11 @@
     "start": "electron .",
     "build-win": "electron-builder --win",
     "build-mac": "electron-builder --mac",
-    "build-linux": "electron-builder --linux",
-    "build:android": "npx cap sync android && npx cap open android",
-    "mobile:sync": "npx cap sync",
-    "mobile:run": "npx cap run android",
-    "android:fix": "node android-fix.js",
-    "android:build": "npx cap sync android && npx cap open android"
+    "build-linux": "electron-builder --linux"
   },
   "devDependencies": {
     "electron": "^29.0.0",
-    "electron-builder": "^24.0.0",
-    "@capacitor/core": "5.0.0",
-    "@capacitor/cli": "5.0.0",
-    "@capacitor/android": "5.0.0"
+    "electron-builder": "^24.0.0"
   },
   "build": {
     "appId": "com.badran.cnc",
@@ -32,18 +24,15 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "logo-badran.png"
+      "icon": "logo-badran.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": [
-        "ar"
-      ],
+      "installerLanguages": ["ar"],
       "language": "1025"
     },
     "mac": {
-      "icon": "logo-badran.png",
       "target": "dmg"
     },
     "linux": {
