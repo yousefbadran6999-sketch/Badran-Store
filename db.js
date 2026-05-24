@@ -150,16 +150,24 @@ function loadLocalData() {
   }
 }
 
-async function loadData() {
-  loadLocalData();
-  if (isOnline) {
-    showSyncStatus('جاري...');
-    setTimeout(async function() {
-      var ok = await syncFromSupabase();
-      showSyncStatus(ok ? 'متزامن' : 'خطأ');
-      if (ok && currentTab === 'dashboard') renderDashboard();
-    }, 1500);
-  } else {
-    showSyncStatus('أوف لاين');
-  }
+function loadData() {
+  return new Promise(function(resolve) {
+    loadLocalData();
+    if (isOnline) {
+      showSyncStatus('...');
+      // تحميل فوري من المحلي ثم sync في الخلفية
+      resolve();
+      setTimeout(function() {
+        syncFromSupabase().then(function(ok) {
+          showSyncStatus(ok ? 'متزامن' : 'خطأ');
+          if (ok && typeof currentTab !== 'undefined' && currentTab === 'dashboard') {
+            if (typeof renderDashboard === 'function') renderDashboard();
+          }
+        });
+      }, 1000);
+    } else {
+      showSyncStatus('أوف لاين');
+      resolve();
+    }
+  });
 }
